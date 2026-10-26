@@ -1,0 +1,188 @@
+export const modules = [
+  {
+    id: 'systems', order: 1, title: '系统基础', en: 'SYSTEMS', layer: '基础底座', level: '入门', hours: 24,
+    brief: '先理解机器如何执行，再理解 AI 为何昂贵。',
+    description: '建立操作系统、体系结构、网络与性能分析的共同语言，能定位瓶颈发生在计算、内存、I/O 还是通信。',
+    outcomes: ['读懂一次训练或推理请求的完整执行链路', '使用性能工具区分 CPU、GPU、I/O 与等待', '用吞吐、延迟、利用率描述系统而非凭感觉'],
+    topics: [
+      { id: 'sys-os', title: '进程、线程与异步 I/O', summary: '理解调度、上下文切换、同步原语和异步执行，为运行时与服务并发打基础。', question: 'Python 线程、进程与异步任务分别适合哪类 AI 工作负载？' },
+      { id: 'sys-memory', title: '内存层次与虚拟内存', summary: '从缓存、主存到显存建立局部性思维，理解分页、缺页与内存带宽。', question: '为什么数据布局不变、算法不变，缓存命中率却能改变性能？' },
+      { id: 'sys-arch', title: '计算机体系结构与并行', summary: '学习指令流水线、SIMD、NUMA 与一致性，建立硬件性能直觉。', question: '计算密集和内存密集负载的优化方法有什么根本差异？' },
+      { id: 'sys-perf', title: 'Linux 性能分析', summary: '掌握 perf、top、iostat、strace 等工具，用证据构造性能分析路径。', question: 'GPU 利用率低时，如何证明瓶颈来自主机侧数据准备？' },
+    ],
+  },
+  {
+    id: 'hardware', order: 2, title: 'GPU 与加速器', en: 'ACCELERATORS', layer: '基础底座', level: '入门', hours: 20,
+    brief: '看懂算力、显存、互联与芯片差异。',
+    description: '理解 GPU/TPU 等加速器的执行模型和关键规格，学会针对真实工作负载选择硬件，而不是只比较峰值算力。',
+    outcomes: ['解释 SM、Tensor Core、HBM 与互联的作用', '估算模型权重、激活和 KV Cache 的显存需求', '依据精度、生态、产能与 TCO 评估加速平台'],
+    topics: [
+      { id: 'hw-gpu', title: 'GPU 执行模型', summary: '理解 Grid、Block、Warp、SM 与占用率，建立从线程到硬件的映射。', question: 'Warp 发散为什么会让同一条指令流浪费执行槽？' },
+      { id: 'hw-memory', title: 'HBM、SRAM 与张量核心', summary: '理解显存带宽、片上缓存和矩阵计算单元如何共同决定内核效率。', question: '为什么提高算术强度通常比盲目增加线程更重要？' },
+      { id: 'hw-precision', title: '数值格式与混合精度', summary: '比较 FP32、TF32、BF16、FP16、FP8 与整数格式的表示和权衡。', question: '低精度带来的误差、溢出与硬件收益应如何一起评估？' },
+      { id: 'hw-hetero', title: 'TPU 与异构加速生态', summary: '了解 TPU、NPU 及其他加速器在编译、通信和软件栈上的差异。', question: '迁移到新加速器时，模型代码之外还要验证哪些兼容层？' },
+    ],
+  },
+  {
+    id: 'kernels', order: 3, title: '算子与 AI 编译器', en: 'KERNELS & COMPILERS', layer: '运行时与编译', level: '进阶', hours: 36,
+    brief: '从“会调用”走向“知道算子为什么快”。',
+    description: '覆盖 CUDA/Triton 算子编写、图捕获、算子融合、自动调优和 ML 编译栈，形成从 profile 到优化的闭环。',
+    outcomes: ['写出并基准测试一个简单 GPU Kernel', '解释融合、 tiling、vectorization 与布局优化', '定位图断裂、重编译和无效优化的根因'],
+    topics: [
+      { id: 'kernel-cuda', title: 'CUDA Kernel 与内存合并', summary: '学习内核启动、共享内存、同步与全局内存访问，写出可测量的 CUDA 算子。', question: '怎样通过访问模式与带宽计算判断 Kernel 是否接近上限？' },
+      { id: 'kernel-triton', title: 'Triton 与算子融合', summary: '用块级编程快速实现融合算子，并与 eager 实现比较正确性和性能。', question: 'RMSNorm 等算子融合到底省掉了哪些读写与启动开销？' },
+      { id: 'compiler-graph', title: '计算图、AOTAutograd 与 Inductor', summary: '理解捕获、 lowering、图优化和代码生成，排查 graph break 与动态 shape。', question: '模型被编译后仍出现重编译，应优先检查哪些输入和控制流？' },
+      { id: 'compiler-mlir', title: 'MLIR、XLA 与 TVM', summary: '比较多层 IR、自动调优和跨硬件代码生成的设计思路。', question: '为什么同一模型在不同编译栈上的融合结果会不同？' },
+    ],
+  },
+  {
+    id: 'frameworks', order: 4, title: '训练框架与运行时', en: 'TRAINING RUNTIME', layer: '运行时与编译', level: '入门', hours: 28,
+    brief: '理解 autograd、执行器和训练循环背后的故事。',
+    description: '以 PyTorch 为主、JAX 为辅，掌握张量、自动微分、模块、数据加载、混合精度和可复现训练。',
+    outcomes: ['独立实现可读、可测、可恢复的训练循环', '解释 autograd 的图构建与反向传播开销', '用 profiler 找到数据、主机与设备之间的空隙'],
+    topics: [
+      { id: 'fw-autograd', title: 'Tensor 与自动微分', summary: '理解计算图、梯度累积、detach 和自定义 autograd Function。', question: '哪些操作会意外保留整张图并造成显存持续增长？' },
+      { id: 'fw-loop', title: '训练循环与混合精度', summary: '组织前向、反向、梯度缩放、裁剪、累积和优化器更新。', question: '梯度累积改变了哪些显存、通信和收敛行为？' },
+      { id: 'fw-data', title: 'DataLoader 与主机流水线', summary: '调优 worker、pin memory、预取与变换，避免加速器等待数据。', question: 'worker 数量越多是否一定越快，如何观察拐点？' },
+      { id: 'fw-jax', title: 'JAX 函数式变换', summary: '学习 jit、grad、vmap、pmap 与显式分片，比较函数式运行时。', question: '纯函数约束为什么有利于编译和自动并行？' },
+    ],
+  },
+  {
+    id: 'distributed', order: 5, title: '分布式训练', en: 'DISTRIBUTED TRAINING', layer: '训练系统', level: '进阶', hours: 40,
+    brief: '把模型切开放下，也把计算重新拼起来。',
+    description: '系统学习数据、张量、流水、序列与专家并行，以及 ZeRO/FSDP、激活重计算和弹性容错。',
+    outcomes: ['为给定模型与集群选择并行组合', '计算主要状态的显存占用和通信量', '设计可恢复的分布式训练与扩缩容方案'],
+    topics: [
+      { id: 'dist-ddp', title: '数据并行与 DDP', summary: '理解 rank、进程组、梯度同步、bucket 与通信计算重叠。', question: '全局 batch 增大后，学习率与训练稳定性应如何联动？' },
+      { id: 'dist-shard', title: 'ZeRO 与 FSDP', summary: '比较参数、梯度、优化器状态的分片策略和物化时机。', question: '分片降低静态显存后，峰值显存为什么仍可能超限？' },
+      { id: 'dist-model', title: '张量、流水与序列并行', summary: '学习模型切分、微批次、气泡和跨层通信，理解 3D 并行组合。', question: '流水线气泡与张量并行通信如何随拓扑变化？' },
+      { id: 'dist-moe', title: 'MoE、专家并行与弹性训练', summary: '理解路由、容量因子、All-to-All、负载不均和故障恢复。', question: '专家倾斜如何同时影响精度、通信和设备利用率？' },
+    ],
+  },
+  {
+    id: 'network', order: 6, title: '集群网络与集合通信', en: 'NETWORK & NCCL', layer: '训练系统', level: '深入', hours: 24,
+    brief: '训练集群里，通信常常就是隐藏的计算图。',
+    description: '从 RDMA、InfiniBand/RoCE 到 NCCL 集合通信，学习拓扑感知、拥塞排查与通信基准测试。',
+    outcomes: ['解释 AllReduce、AllGather、ReduceScatter 与 All-to-All', '使用 NCCL Tests 建立通信基线', '结合拓扑定位链路、拥塞和配置问题'],
+    topics: [
+      { id: 'net-collective', title: '集合通信原语与算法', summary: '理解 Ring、Tree 等算法及其带宽、延迟和步数权衡。', question: '消息大小变化时，为什么最优集合通信算法也会变化？' },
+      { id: 'net-rdma', title: 'RDMA、InfiniBand 与 RoCE', summary: '理解零拷贝、内核旁路、无损网络与拥塞控制的基本机制。', question: 'RoCE 网络中的 PFC 配置不当会引起哪些连锁反应？' },
+      { id: 'net-topo', title: 'NVLink、PCIe 与网络拓扑', summary: '绘制节点内与跨节点通信路径，理解 rail-aware 和拓扑亲和。', question: '为什么同样的 GPU 数量，不同放置方式会显著改变吞吐？' },
+      { id: 'net-debug', title: 'NCCL 测试与故障排查', summary: '使用 nccl-tests、环境变量和日志验证带宽、延迟及超时。', question: '如何区分真正的网络故障与上游计算停顿造成的通信超时？' },
+    ],
+  },
+  {
+    id: 'data', order: 7, title: '数据、存储与 Checkpoint', en: 'DATA & STORAGE', layer: '数据系统', level: '进阶', hours: 26,
+    brief: '让数据供得上，让训练状态找得回。',
+    description: '覆盖数据格式、流式读取、对象存储、缓存、数据版本和分布式 Checkpoint，构建高吞吐可恢复的数据路径。',
+    outcomes: ['为大规模样本设计可分片、可重放的数据管线', '区分小文件、元数据和吞吐瓶颈', '制定 Checkpoint 一致性、保留与恢复策略'],
+    topics: [
+      { id: 'data-format', title: 'Parquet、Arrow 与流式样本', summary: '理解列式格式、内存表示、压缩与顺序读取对管线的影响。', question: '为什么小文件过多会让对象存储和训练框架同时变慢？' },
+      { id: 'data-cache', title: '对象存储、缓存与预取', summary: '设计本地盘、分布式缓存和远端对象存储之间的数据层次。', question: '缓存命中率、网络带宽与本地盘容量应如何共同规划？' },
+      { id: 'data-version', title: '数据版本、血缘与质量', summary: '记录数据快照、代码、配置和模型之间的关系，建立质量门禁。', question: '一次实验如何精确复原到当时的数据与预处理逻辑？' },
+      { id: 'data-ckpt', title: '分布式 Checkpoint', summary: '学习分片保存、异步持久化、一致性和快速恢复。', question: '保存 Checkpoint 时如何避免长时间阻塞训练或写出半份状态？' },
+    ],
+  },
+  {
+    id: 'inference', order: 8, title: 'LLM 推理引擎', en: 'INFERENCE ENGINES', layer: '推理与服务', level: '进阶', hours: 38,
+    brief: '把每一个 token 的延迟、显存和成本算清楚。',
+    description: '深入 prefill/decode、KV Cache、连续批处理、分页注意力、量化、投机解码与分布式推理。',
+    outcomes: ['解释 TTFT、TPOT、端到端延迟与 goodput', '估算 KV Cache 并分析批处理与显存关系', '设计可复现的推理性能与精度对照实验'],
+    topics: [
+      { id: 'inf-decode', title: 'Prefill、Decode 与注意力', summary: '比较两个阶段的计算特征，理解长输入和长输出造成的不同压力。', question: '为什么增大 batch 对 prefill 与 decode 的收益并不相同？' },
+      { id: 'inf-kv', title: 'KV Cache 与 PagedAttention', summary: '学习缓存布局、分页分配、前缀共享和换出策略。', question: '上下文变长时，KV Cache 如何反向限制并发与吞吐？' },
+      { id: 'inf-batch', title: '连续批处理与调度', summary: '理解迭代级调度、抢占、优先级和 chunked prefill。', question: '调度器如何在排队公平性与 SLO 之间取舍？' },
+      { id: 'inf-opt', title: '量化、投机解码与并行推理', summary: '评估权重量化、KV 量化、草稿模型、TP/PP/EP 的收益与适用边界。', question: '任何量化或投机方案都应同时验证哪些精度和尾延迟指标？' },
+    ],
+  },
+  {
+    id: 'serving', order: 9, title: '模型服务与流量治理', en: 'MODEL SERVING', layer: '推理与服务', level: '进阶', hours: 30,
+    brief: '从“能返回结果”到“可承诺服务质量”。',
+    description: '覆盖模型打包、在线服务、路由、灰度、自动扩缩容、多模型托管、网关与容量规划。',
+    outcomes: ['定义并测量面向业务的推理 SLO', '设计灰度、回滚与突发流量保护', '根据流量曲线规划副本、队列和容量'],
+    topics: [
+      { id: 'serve-runtime', title: '模型打包与服务运行时', summary: '管理模型 artifact、依赖、启动加载、健康检查和 API 合约。', question: '如何区分进程存活、模型就绪和依赖可用？' },
+      { id: 'serve-autoscale', title: '弹性伸缩与多模型托管', summary: '基于并发、队列和显存设计伸缩策略，理解冷启动与模型卸载。', question: '只按 GPU 利用率扩容为什么可能越扩越慢？' },
+      { id: 'serve-router', title: '路由、灰度与流量镜像', summary: '实现版本路由、租户隔离、超时重试、限流和降级。', question: '重试风暴怎样形成，推理服务为何需要特别的重试预算？' },
+      { id: 'serve-bench', title: '压测、SLO 与容量规划', summary: '构造真实长度和到达分布，测量 P50/P95/P99、吞吐与 goodput。', question: '平均延迟漂亮但 P99 不达标时，应从哪些队列开始排查？' },
+    ],
+  },
+  {
+    id: 'platform', order: 10, title: '算力平台与云原生', en: 'AI PLATFORMS', layer: '平台与调度', level: '进阶', hours: 32,
+    brief: '把一堆 GPU 变成可分配、可隔离的平台。',
+    description: '学习容器、Kubernetes、Slurm、Ray、GPU 调度、队列、配额、多租户与异构资源管理。',
+    outcomes: ['部署一个可观测的 GPU 工作负载', '理解批调度、gang scheduling 与队列公平性', '在利用率、隔离性和排队时间之间做设计取舍'],
+    topics: [
+      { id: 'plat-container', title: '容器、镜像与驱动边界', summary: '理解镜像层、运行时、驱动挂载和可复现环境。', question: '为什么容器内 CUDA 工具包版本不能与宿主机驱动混为一谈？' },
+      { id: 'plat-k8s', title: 'Kubernetes 与 GPU 调度', summary: '掌握 Device Plugin、资源请求、亲和、污点和 GPU Operator。', question: '资源 request 与真实显存需求不一致会导致哪些调度问题？' },
+      { id: 'plat-batch', title: 'Slurm、Kueue 与批调度', summary: '学习作业队列、配额、抢占、gang scheduling 与公平共享。', question: '为什么大规模训练需要一组任务同时就绪才能启动？' },
+      { id: 'plat-ray', title: 'Ray、KubeRay 与异构编排', summary: '理解 Task、Actor、Placement Group 和弹性分布式应用。', question: '何时需要 Ray 的应用层编排，何时 Kubernetes 已足够？' },
+    ],
+  },
+  {
+    id: 'observability', order: 11, title: '可观测性与稳定性', en: 'OBSERVABILITY & SRE', layer: '平台与调度', level: '进阶', hours: 28,
+    brief: '没有指标、追踪和复盘，优化只是猜测。',
+    description: '建立从硬件到业务的观测体系，覆盖日志、指标、追踪、告警、故障演练、SRE 与事故复盘。',
+    outcomes: ['搭建 GPU 与应用指标的分层仪表盘', '用 trace 串起网关、调度器和推理引擎', '写出可执行、无指责的事故复盘'],
+    topics: [
+      { id: 'obs-metrics', title: 'GPU、系统与业务指标', summary: '采集 DCGM、主机、运行时和业务指标，避免只看单一利用率。', question: 'SM 利用率高是否代表业务吞吐一定好，为什么？' },
+      { id: 'obs-trace', title: '日志、Trace 与 Profiling', summary: '关联请求追踪、事件日志与 timeline，定位跨组件等待。', question: '如何在一次慢请求中区分排队、传输和 GPU 执行时间？' },
+      { id: 'obs-slo', title: '告警、SLO 与错误预算', summary: '从症状而非原因设计告警，用错误预算平衡迭代和可靠性。', question: '哪些告警值得半夜叫醒人，哪些只需进入工单？' },
+      { id: 'obs-incident', title: '容错、演练与事故复盘', summary: '设计超时、降级、回滚、故障注入和结构化复盘。', question: '复盘如何将根因转化为可验证的工程行动？' },
+    ],
+  },
+  {
+    id: 'rag', order: 12, title: 'RAG 与 Agent 基础设施', en: 'RAG & AGENT INFRA', layer: '应用基础设施', level: '进阶', hours: 26,
+    brief: '上下文、工具和状态，也需要可靠的系统工程。',
+    description: '覆盖数据摄入、Embedding、向量检索、混合搜索、上下文缓存、Agent 运行时、工具沙箱和 MCP。',
+    outcomes: ['构建可评估、可追溯的检索管线', '理解向量索引在召回、延迟与内存间的权衡', '为工具执行设计状态、权限、超时和隔离'],
+    topics: [
+      { id: 'rag-ingest', title: '文档摄入、切分与索引', summary: '设计解析、去重、切分、元数据和增量更新管线。', question: '索引更新时如何避免新旧文档版本混杂？' },
+      { id: 'rag-search', title: '向量数据库与混合检索', summary: '比较 HNSW、IVF、标量量化、过滤和关键词融合。', question: '高召回配置为何可能同时伤害延迟和答案质量？' },
+      { id: 'agent-runtime', title: 'Agent 状态、队列与记忆', summary: '管理长任务状态、断点恢复、上下文记忆和幂等工具调用。', question: 'Agent 重试一个非幂等工具时，怎样避免重复执行副作用？' },
+      { id: 'agent-tools', title: 'MCP、工具网关与沙箱', summary: '标准化工具接入，同时处理认证、授权、审计和代码执行隔离。', question: '工具描述、权限边界和输出大小如何影响系统安全与成本？' },
+    ],
+  },
+  {
+    id: 'mlops', order: 13, title: 'MLOps 与 LLMOps', en: 'MLOPS & LLMOPS', layer: '应用基础设施', level: '入门', hours: 24,
+    brief: '让实验、模型、评测和发布形成可重复闭环。',
+    description: '覆盖实验追踪、模型注册、数据与特征管线、离线/在线评测、反馈数据和持续交付。',
+    outcomes: ['设计可复现的实验元数据与对比视图', '建立模型从候选到发布的门禁', '将离线指标、线上质量与人工反馈分开衡量'],
+    topics: [
+      { id: 'mlops-exp', title: '实验追踪与模型注册', summary: '记录代码、配置、数据、环境和 artifact，管理模型生命周期。', question: '一个线上模型如何追溯到训练它的全部输入？' },
+      { id: 'mlops-pipeline', title: '工作流、特征与数据质量', summary: '构建可调度、可重试、幂等的训练与数据工作流。', question: '任务重跑时，哪些缓存可以复用，哪些必须失效？' },
+      { id: 'mlops-eval', title: 'LLM 评测与回归测试', summary: '组织数据集、判分器、人工评审与统计波动，防止单一分数误导。', question: '模型更新后，如何证明质量提升不是评测噪声？' },
+      { id: 'mlops-feedback', title: '线上反馈与持续迭代', summary: '收集合规反馈、漂移信号和失败样本，形成可审计的数据闭环。', question: '线上样本进入训练集前需要经过哪些清洗和授权步骤？' },
+    ],
+  },
+  {
+    id: 'governance', order: 14, title: '成本、安全与治理', en: 'FINOPS & GOVERNANCE', layer: '应用基础设施', level: '进阶', hours: 20,
+    brief: '真正可用的基础设施，也要算得过账、守得住边界。',
+    description: '将 FinOps、容量效率、供应链、模型与数据安全、隐私和 AI 风险治理纳入架构决策。',
+    outcomes: ['按租户、模型和请求拆解单位成本', '识别模型供应链与工具调用的关键风险', '把安全与合规要求转化为工程控制点'],
+    topics: [
+      { id: 'gov-cost', title: 'FinOps、TCO 与单位经济', summary: '拆解 GPU、网络、存储和平台开销，跟踪每百万 token 或每次训练成本。', question: '成本分摊怎样避免鼓励团队隐藏用量或过度预留？' },
+      { id: 'gov-capacity', title: '容量、配额与绿色计算', summary: '结合需求预测、碎片整理、调度和能耗优化资源使用。', question: '集群平均利用率很高时，为什么仍可能存在大量不可用小容量？' },
+      { id: 'gov-security', title: '模型、数据与供应链安全', summary: '覆盖 artifact 签名、依赖扫描、密钥、提示注入与数据泄露防护。', question: '模型文件和推理依赖进入生产前需要哪些信任验证？' },
+      { id: 'gov-risk', title: '隐私、审计与 AI 风险治理', summary: '建立数据分级、访问控制、审计留痕、模型说明和风险评估。', question: '怎样让一次高风险输出的模型、数据、 prompt 与工具调用可审计？' },
+    ],
+  },
+];
+
+export const learningPaths = [
+  { id: 'p1', phase: '01', title: '建立系统直觉', duration: '第 1–3 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 网络性能基线报告。' },
+  { id: 'p2', phase: '02', title: '吃透单卡执行', duration: '第 4–7 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，建立 profile → 假设 → 实验的闭环。', project: '优化一个融合算子，并提交正确性与性能对照。' },
+  { id: 'p3', phase: '03', title: '跨越多机训练', duration: '第 8–12 周', moduleIds: ['distributed', 'network', 'data'], goal: '理解并行策略、通信和存储如何共同决定扩展效率。', project: '设计并验证一套多机训练、Checkpoint 与故障恢复方案。' },
+  { id: 'p4', phase: '04', title: '做好在线推理', duration: '第 13–17 周', moduleIds: ['inference', 'serving'], goal: '能针对流量与 SLO 调整引擎、批处理、缓存、量化和容量。', project: '完成一次真实流量分布的推理压测与容量规划。' },
+  { id: 'p5', phase: '05', title: '走向生产平台', duration: '第 18–22 周', moduleIds: ['platform', 'observability'], goal: '让 GPU 工作负载可调度、可观测、可回滚、可演练。', project: '部署带指标、告警和故障演练的 GPU 服务。' },
+  { id: 'p6', phase: '06', title: '形成自己的技术栈', duration: '长期迭代', moduleIds: ['rag', 'mlops', 'governance'], goal: '打通应用基础设施、质量闭环与成本安全，并沉淀个人方法论。', project: '发布一篇完整架构复盘：约束、方案、数据、失败与下一步。' },
+];
+
+export const stackLayers = [
+  { id: 'app', name: '应用与质量', en: 'EXPERIENCE', moduleIds: ['rag', 'mlops', 'governance'], items: ['RAG / Agent', '评测与反馈', '安全与成本'] },
+  { id: 'serve', name: '推理与服务', en: 'SERVING', moduleIds: ['inference', 'serving'], items: ['推理引擎', 'KV Cache', '路由与弹性'] },
+  { id: 'train', name: '训练与数据', en: 'TRAINING', moduleIds: ['distributed', 'network', 'data'], items: ['并行策略', '集合通信', '数据与 Checkpoint'] },
+  { id: 'runtime', name: '框架与编译', en: 'RUNTIME', moduleIds: ['frameworks', 'kernels'], items: ['PyTorch / JAX', 'CUDA / Triton', 'MLIR / XLA'] },
+  { id: 'platform', name: '平台与可靠性', en: 'PLATFORM', moduleIds: ['platform', 'observability'], items: ['K8s / Slurm / Ray', '监控与 Trace', 'SRE'] },
+  { id: 'hardware', name: '系统与硬件', en: 'FOUNDATION', moduleIds: ['systems', 'hardware'], items: ['OS / 体系结构', 'GPU / TPU', '内存与互联'] },
+];
