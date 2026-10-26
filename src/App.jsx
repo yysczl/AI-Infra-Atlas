@@ -12,13 +12,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { learningPaths, modules, stackLayers } from './content/curriculum.js';
 import resources from './content/resources.json';
+import { lessons } from './content/lessons.js';
 import { labs } from './content/labs.js';
 import { labGuides } from './content/lab-guides.js';
 import { builtInNotes } from './content/notes.js';
 
-const PAGE_IDS = ['dashboard', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
+const PAGE_IDS = ['dashboard', 'start', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
 const PAGE_META = {
   dashboard: { label: '首页', eyebrow: '学习首页' },
+  start: { label: '新手起步', eyebrow: '第 0 步' },
   curriculum: { label: '学习路径', eyebrow: '课程' },
   map: { label: '知识地图', eyebrow: '知识地图' },
   resources: { label: '资源库', eyebrow: '资源库' },
@@ -28,6 +30,7 @@ const PAGE_META = {
 };
 const NAV_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard },
+  { id: 'start', icon: Zap },
   { id: 'curriculum', icon: BookOpen },
   { id: 'map', icon: Map },
   { id: 'resources', icon: LibraryBig },
@@ -36,12 +39,13 @@ const NAV_ITEMS = [
   { id: 'maintenance', icon: Settings2 },
 ];
 const MODULE_ICONS = {
-  systems: SquareTerminal, hardware: Cpu, kernels: Braces, frameworks: Workflow,
+  foundations: BookOpen, systems: SquareTerminal, hardware: Cpu, kernels: Braces, frameworks: Workflow,
   distributed: Network, network: Cable, data: Database, inference: Zap,
   serving: Server, platform: Boxes, observability: Activity, rag: ScanSearch,
   mlops: GitBranch, governance: ShieldCheck,
 };
 const RESOURCE_TYPES = ['全部类型', ...new Set(resources.map((item) => item.type))];
+const RESOURCE_LANGUAGES = ['全部语言', ...['中文', '中文字幕', 'English'].filter((lang) => resources.some((item) => item.lang === lang))];
 const ALL_TOPICS = modules.flatMap((module) => module.topics.map((topic) => ({ ...topic, module })));
 const STORAGE = {
   progress: 'infra-atlas-progress-v1', bookmarks: 'infra-atlas-bookmarks-v1',
@@ -133,7 +137,7 @@ function App() {
   const [mobileNav, setMobileNav] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [topicDetail, setTopicDetail] = useState(null);
-  const [selectedModuleId, setSelectedModuleId] = useState('systems');
+  const [selectedModuleId, setSelectedModuleId] = useState('foundations');
   const [selectedLabId, setSelectedLabId] = useState(labs[0].id);
   const [selectedNoteId, setSelectedNoteId] = useState(builtInNotes[0]?.id);
   const [resourceFocus, setResourceFocus] = useState({ query: '', category: 'all' });
@@ -181,6 +185,14 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function openModule(id) { setSelectedModuleId(id); navigate('curriculum'); }
+  function openTopic(moduleId, topicId) {
+    const module = modules.find((item) => item.id === moduleId);
+    const topic = module?.topics.find((item) => item.id === topicId);
+    if (!module || !topic) return;
+    setSelectedModuleId(moduleId);
+    navigate('curriculum');
+    setTopicDetail({ module, topic });
+  }
   function openResources(category = 'all', query = '') {
     setResourceFocus({ category, query, nonce: Date.now() }); navigate('resources');
   }
@@ -193,7 +205,9 @@ function App() {
   const shared = { navigate, progress, setProgress, showToast: setToast };
   let content;
   if (activePage === 'dashboard') content = <Dashboard {...shared} completedTopics={completedTopics} overallProgress={overallProgress}
-    openModule={openModule} openResources={openResources} openLab={openLab} openNote={openNote} bookmarks={bookmarks} />;
+    openModule={openModule} openTopic={openTopic} openResources={openResources} openLab={openLab} openNote={openNote} bookmarks={bookmarks} />;
+  else if (activePage === 'start') content = <StartPage navigate={navigate} openModule={openModule}
+    openTopic={openTopic} openLab={openLab} openResources={openResources} />;
   else if (activePage === 'curriculum') content = <CurriculumPage {...shared} selectedModuleId={selectedModuleId}
     setSelectedModuleId={setSelectedModuleId} setTopicDetail={setTopicDetail} openResources={openResources} />;
   else if (activePage === 'map') content = <MapPage openModule={openModule} openResources={openResources} />;
@@ -259,7 +273,7 @@ function App() {
       </div>
 
       {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} notes={allNotes}
-        openTopic={(module, topic) => { setSearchOpen(false); setTopicDetail({ module, topic }); }}
+        openTopic={(module, topic) => { setSearchOpen(false); openTopic(module.id, topic.id); }}
         openResources={(query) => { setSearchOpen(false); openResources('all', query); }}
         openLab={(id) => { setSearchOpen(false); openLab(id); }}
         openNote={(id) => { setSearchOpen(false); openNote(id); }} />}
@@ -270,22 +284,23 @@ function App() {
   );
 }
 
-function Dashboard({ navigate, openModule, openResources, openLab, openNote, progress, overallProgress, completedTopics }) {
+function Dashboard({ navigate, openModule, openTopic, openResources, openLab, openNote, progress, overallProgress, completedTopics }) {
   const nextTopics = ALL_TOPICS.filter((topic) => !progress[topic.id]).slice(0, 3);
-  const featured = resources.filter((item) => item.featured).slice(0, 4);
+  const featured = ['fw-d2l', 'sys-openmlsys', 'inf-vllm-video', 'serve-genai-platform-blog']
+    .map((id) => resources.find((item) => item.id === id)).filter(Boolean);
   const firstLab = labs[0];
   return (
     <>
       <section className="hero">
         <div className="hero-copy">
-          <div className="hero-kicker"><span><BookOpen size={15} /> 面向开发者的入门与实践教程</span><em>免费学习</em></div>
-          <h1>系统学习 AI 基础设施，<br /><span>从原理到动手实践。</span></h1>
-          <p>从 Linux、GPU 和 PyTorch 基础开始，逐步学习算子优化、分布式训练、推理服务与生产部署。每个实验都提供命令、验证方法和结果模板。</p>
+          <div className="hero-kicker"><span><BookOpen size={15} /> 从零开始的 AI Infra 自学站点</span><em>免费学习</em></div>
+          <h1>系统学习 AI 基础设施，<br /><span>从第一课到动手实践。</span></h1>
+          <p>先用站内微课建立概念，再按顺序看 B 站视频、博客和官方文档，最后用练习与实验验证。无需先买 GPU，也不用自己拼学习路线。</p>
           <div className="hero-actions">
-            <button className="btn btn-primary" onClick={() => navigate('curriculum')}>查看学习路径 <ArrowRight size={17} /></button>
-            <button className="btn btn-ghost" onClick={() => openLab(firstLab.id)}>从第一个实验开始 <FlaskConical size={17} /></button>
+            <button className="btn btn-primary" onClick={() => openTopic('foundations', 'base-linux')}>从新手第一课开始 <ArrowRight size={17} /></button>
+            <button className="btn btn-ghost" onClick={() => navigate('start')}>查看新手使用指南 <Map size={17} /></button>
           </div>
-          <div className="hero-footnote"><ListChecks size={16} /><span>建议先具备 Python、Linux 命令行和基础深度学习知识</span></div>
+          <div className="hero-footnote"><ListChecks size={16} /><span>第 0 步补齐 Linux、Python 和训练基础，第一个实验只需 CPU</span></div>
         </div>
         <div className="hero-system learning-route" aria-label="推荐学习顺序">
           <div className="system-top"><span>推荐学习顺序</span><Map size={18} /></div>
@@ -294,15 +309,15 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
               <span>{path.phase}</span><div><strong>{path.title}</strong><small>{path.goal}</small></div><ChevronRight size={17} />
             </button>)}
           </div>
-          <button className="route-more" onClick={() => navigate('curriculum')}>查看全部六个阶段 <ArrowRight size={15} /></button>
+          <button className="route-more" onClick={() => navigate('curriculum')}>查看全部七个阶段 <ArrowRight size={15} /></button>
         </div>
       </section>
 
       <section className="stats-strip" aria-label="网站内容统计">
-        <div><strong>{modules.length}</strong><span>知识领域<small>按技术方向分类</small></span></div>
-        <div><strong>{ALL_TOPICS.length}</strong><span>核心主题<small>带关键问题与导读</small></span></div>
-        <div><strong>{resources.length}</strong><span>精选资料<small>优先官方文档与论文</small></span></div>
-        <div><strong>{labs.length}</strong><span>动手实验<small>命令与结果验证齐全</small></span></div>
+        <div><strong>{modules.length}</strong><span>知识领域<small>包含新手先修模块</small></span></div>
+        <div><strong>{ALL_TOPICS.length}</strong><span>站内微课<small>讲解、练习与自测</small></span></div>
+        <div><strong>{resources.length}</strong><span>精选资料<small>视频、博客、文档与论文</small></span></div>
+        <div><strong>{labs.length}</strong><span>动手实验<small>从零 GPU 实验开始</small></span></div>
         <div className="stats-progress"><ProgressRing value={overallProgress} size={58} stroke={5} /><span>我的学习进度<small>已完成 {completedTopics} 个主题</small></span></div>
       </section>
 
@@ -310,7 +325,7 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
         <section className="panel continue-panel">
           <SectionHead eyebrow="继续学习" title="接下来学什么" action={<button className="text-link" onClick={() => navigate('curriculum')}>完整学习路径 <ArrowUpRight size={15} /></button>} />
           <div className="next-list">
-            {nextTopics.length ? nextTopics.map((topic, index) => <button key={topic.id} onClick={() => openModule(topic.module.id)}>
+            {nextTopics.length ? nextTopics.map((topic, index) => <button key={topic.id} onClick={() => openTopic(topic.module.id, topic.id)}>
               <span className="next-index">0{index + 1}</span>
               <span><small>{topic.module.title}</small><strong>{topic.title}</strong><em>{topic.summary}</em></span>
               <ArrowUpRight size={18} />
@@ -331,10 +346,10 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
         <div className="module-grid">
           {modules.map((module) => {
             const done = module.topics.filter((topic) => progress[topic.id]).length;
-            return <button className={`module-card tone-${((module.order - 1) % 4) + 1}`} key={module.id} onClick={() => openModule(module.id)}>
+            return <button className={`module-card tone-${(module.order % 4) + 1}`} key={module.id} onClick={() => openModule(module.id)}>
               <div className="module-card-top"><span className="module-icon"><ModuleIcon module={module} /></span><em>{String(module.order).padStart(2, '0')}</em></div>
               <small>{module.layer} · {module.level}</small><h3>{module.title}</h3><p>{module.brief}</p>
-              <div className="module-card-foot"><span>{module.topics.length} 个主题 · 建议 {module.hours} 小时</span><span className="mini-progress"><i style={{ width: `${done / module.topics.length * 100}%` }} /></span></div>
+              <div className="module-card-foot"><span>{module.topics.length} 节微课 · 建议 {module.hours} 小时</span><span className="mini-progress"><i style={{ width: `${done / module.topics.length * 100}%` }} /></span></div>
             </button>;
           })}
         </div>
@@ -342,10 +357,10 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
 
       <div className="home-bottom-grid">
         <section className="home-section">
-          <SectionHead eyebrow="精选阅读" title="值得先读的资料" action={<button className="text-link" onClick={() => openResources()}>查看全部 {resources.length} 条 <ArrowUpRight size={15} /></button>} />
+          <SectionHead eyebrow="精选阅读" title="书、视频与博客搭配学" action={<button className="text-link" onClick={() => openResources()}>查看全部 {resources.length} 条 <ArrowUpRight size={15} /></button>} />
           <div className="featured-resources">
             {featured.map((item) => <a key={item.id} href={item.url} target="_blank" rel="noreferrer">
-              <span className="resource-type">{item.type}</span><div><h3>{item.title}</h3><p>{item.description}</p><small>{modules.find((module) => module.id === item.category)?.title} · {item.level}</small></div><ArrowUpRight size={18} />
+              <span className="resource-type">{item.type}</span><div><h3>{item.title}</h3><p>{item.description}</p><small>{modules.find((module) => module.id === item.category)?.title} · {item.lang}</small></div><ArrowUpRight size={18} />
             </a>)}
           </div>
         </section>
@@ -360,13 +375,77 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
   );
 }
 
+function StartPage({ navigate, openModule, openTopic, openLab, openResources }) {
+  const foundation = modules.find((module) => module.id === 'foundations');
+  const stack = [
+    { number: '05', title: '应用与效果', text: 'RAG、Agent、评测、反馈与风险治理', moduleId: 'rag' },
+    { number: '04', title: '训练与推理', text: '并行、通信、KV Cache、服务与容量', moduleId: 'inference' },
+    { number: '03', title: '平台与可观测', text: '容器、Kubernetes、调度、指标与故障恢复', moduleId: 'platform' },
+    { number: '02', title: '系统与硬件', text: '操作系统、GPU、内存、网络与 Kernel', moduleId: 'systems' },
+    { number: '01', title: '学习先修能力', text: 'Linux、Python、训练循环与可复现实验', moduleId: 'foundations' },
+  ];
+  const loop = [
+    { icon: BookOpen, step: '01', title: '读站内微课', text: '先用 12–20 分钟理解核心概念和它们之间的关系。' },
+    { icon: LibraryBig, step: '02', title: '看视频与博客', text: '按推荐顺序补充直观讲解、工程经验和官方细节。' },
+    { icon: FlaskConical, step: '03', title: '做可验证练习', text: '完成一个小任务，并对照预期结果和常见误区。' },
+    { icon: CircleHelp, step: '04', title: '自测再标记', text: '先口头回答关键问题，再看参考答案并记录进度。' },
+  ];
+  const firstWeek = [
+    { day: 'DAY 1', title: '命令行与 Git', text: '会进入目录、查看日志并保存一次版本提交。', topicId: 'base-linux' },
+    { day: 'DAY 2', title: 'Python 与张量', text: '建立虚拟环境，看懂 shape、dtype 和 device。', topicId: 'base-python' },
+    { day: 'DAY 3', title: '第一个训练循环', text: '串起预测、loss、梯度和优化器更新。', topicId: 'base-ml' },
+    { day: 'DAY 4', title: '可复现实验', text: '固定种子，保存环境，一次只改变一个变量。', topicId: 'base-workflow' },
+    { day: 'DAY 5', title: 'CPU 训练实验', text: '真正跑出 w ≈ 3、b ≈ 1，并完成学习率对照。', labId: 'lab-first-train' },
+    { day: 'DAY 6', title: '进入系统基础', text: '开始理解进程、线程与异步 I/O。', moduleId: 'systems', topicId: 'sys-os' },
+    { day: 'DAY 7', title: '复盘与整理', text: '写下已掌握、仍困惑和下周要验证的问题。', page: 'notes' },
+  ];
+  return (
+    <>
+      <section className="start-hero">
+        <div className="start-hero-copy">
+          <div className="eyebrow">START HERE / 第 0 步</div>
+          <h1>第一次学 AI Infra？<br /><span>从这里开始就够了。</span></h1>
+          <p>不需要先懂 GPU，也不需要自己筛选几百个链接。按顺序完成微课、资料、练习和实验；遇到不懂的术语，随时回到对应主题补齐。</p>
+          <div className="hero-actions"><button className="btn btn-primary" onClick={() => openTopic('foundations', 'base-linux')}>开始第一课 <ArrowRight size={17} /></button><button className="btn btn-ghost" onClick={() => openLab('lab-first-train')}>先看零 GPU 实验 <FlaskConical size={17} /></button></div>
+          <div className="start-promises"><span><Check size={14} />中文站内讲解</span><span><Check size={14} />明确学习顺序</span><span><Check size={14} />每节都有自测</span></div>
+        </div>
+        <aside className="start-hero-card"><span>YOUR FIRST WEEK</span><strong>每天 30–60 分钟</strong><p>第一周只解决四件事：会操作环境、看得懂训练、能保存结果、敢动手验证。</p><div><b>4</b><small>节先修微课</small><b>1</b><small>个 CPU 实验</small></div><button onClick={() => document.getElementById('first-week')?.scrollIntoView({ behavior: 'smooth' })}>查看七天安排 <ChevronDown size={15} /></button></aside>
+      </section>
+
+      <section className="start-section">
+        <SectionHead eyebrow="先建立全局画面" title="AI Infra 到底在做什么？" />
+        <p className="start-section-intro">它让模型能够被训练、部署、观测和持续改进。学习时从下往上打基础，排障时沿着真实请求逐层找证据。</p>
+        <div className="start-stack">{stack.map((item) => <button key={item.number} onClick={() => openModule(item.moduleId)}><span>{item.number}</span><div><strong>{item.title}</strong><p>{item.text}</p></div><ArrowUpRight size={18} /></button>)}</div>
+      </section>
+
+      <section className="start-section">
+        <SectionHead eyebrow="第 0 步 / 先修课" title="先补这四块，再进入 AI Infra" action={<button className="text-link" onClick={() => openModule('foundations')}>查看先修模块 <ArrowUpRight size={15} /></button>} />
+        <div className="foundation-grid">{foundation.topics.map((topic, index) => <button key={topic.id} onClick={() => openTopic('foundations', topic.id)}><div><span>00.{index + 1}</span><em><Clock3 size={13} />{lessons[topic.id].minutes} 分钟</em></div><h3>{topic.title}</h3><p>{topic.summary}</p><strong>开始学习 <ArrowRight size={15} /></strong></button>)}</div>
+      </section>
+
+      <section className="start-section learning-loop-section">
+        <SectionHead eyebrow="每个主题都按同一闭环" title="不是收藏资料，而是完成学习" />
+        <div className="learning-loop">{loop.map((item) => { const Icon = item.icon; return <article key={item.step}><div><Icon size={21} /><span>{item.step}</span></div><h3>{item.title}</h3><p>{item.text}</p></article>; })}</div>
+        <div className="start-example"><BookOpen size={20} /><p><strong>实际入口：</strong>打开任意主题后，使用“学知识 / 做练习 / 看资料”三个标签页。资料按当前主题精选，不需要一次全部看完。</p><button onClick={() => openTopic('foundations', 'base-python')}>试试看 <ArrowRight size={15} /></button></div>
+      </section>
+
+      <section className="start-section" id="first-week">
+        <SectionHead eyebrow="第一周 / 每天 30–60 分钟" title="七天跑通第一轮学习" />
+        <div className="week-plan">{firstWeek.map((item) => <button key={item.day} onClick={() => item.labId ? openLab(item.labId) : item.topicId ? openTopic(item.moduleId || 'foundations', item.topicId) : navigate(item.page)}><span>{item.day}</span><h3>{item.title}</h3><p>{item.text}</p><ArrowUpRight size={16} /></button>)}</div>
+      </section>
+
+      <section className="no-gpu-panel"><div><span><Cpu size={22} /></span><div><div className="eyebrow">NO GPU? NO PROBLEM</div><h2>没有 GPU，也能完成第一阶段</h2><p>所有 60 节微课、纸面练习和自测都可直接学习；实验 00 只使用 CPU。视频与博客用于补直觉，等你理解单卡原理后，再按实验要求使用 GPU，不必为了入门先租机器。</p></div></div><div><button className="btn btn-primary" onClick={() => openLab('lab-first-train')}>开始零 GPU 实验 <ArrowRight size={16} /></button><button className="btn btn-ghost" onClick={() => openResources()}>浏览学习资料 <LibraryBig size={16} /></button></div></section>
+    </>
+  );
+}
+
 function CurriculumPage({ selectedModuleId, setSelectedModuleId, progress, setProgress, setTopicDetail, openResources }) {
   const selected = modules.find((module) => module.id === selectedModuleId) || modules[0];
   const selectedDone = selected.topics.filter((topic) => progress[topic.id]).length;
   return (
     <>
       <PageTitle eyebrow="循序渐进" title="学习路径"
-        description="按六个阶段学习，每个阶段都有明确目标和对应实践。点击领域查看主题，完成学习后再做标记。" />
+        description="按七个阶段学习，每个阶段都有明确目标和对应实践。打开主题先读站内微课，再完成练习、自测与延伸阅读。" />
       <section className="path-rail">
         {learningPaths.map((path) => {
           const pathTopics = modules.filter((module) => path.moduleIds.includes(module.id)).flatMap((module) => module.topics);
@@ -475,29 +554,31 @@ function ResourcesPage({ focus, bookmarks, toggleBookmark }) {
   const [category, setCategory] = useState('all');
   const [type, setType] = useState('全部类型');
   const [level, setLevel] = useState('全部难度');
+  const [language, setLanguage] = useState('全部语言');
   const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
   const [limit, setLimit] = useState(24);
   useEffect(() => {
     if (!focus?.nonce) return;
-    setQuery(focus.query || ''); setCategory(focus.category || 'all'); setLimit(24);
+    setQuery(focus.query || ''); setCategory(focus.category || 'all'); setLanguage('全部语言'); setLimit(24);
   }, [focus]);
   const filtered = useMemo(() => resources.filter((item) => {
-    const haystack = `${item.title} ${item.description} ${item.type} ${modules.find((module) => module.id === item.category)?.title}`.toLowerCase();
+    const haystack = `${item.title} ${item.description} ${item.type} ${item.lang} ${modules.find((module) => module.id === item.category)?.title}`.toLowerCase();
     return (!query || haystack.includes(query.toLowerCase())) && (category === 'all' || item.category === category)
       && (type === '全部类型' || item.type === type) && (level === '全部难度' || item.level === level)
-      && (!bookmarkedOnly || bookmarks.includes(item.id));
-  }), [query, category, type, level, bookmarkedOnly, bookmarks]);
-  useEffect(() => { setLimit(24); }, [query, category, type, level, bookmarkedOnly]);
-  function reset() { setQuery(''); setCategory('all'); setType('全部类型'); setLevel('全部难度'); setBookmarkedOnly(false); }
+      && (language === '全部语言' || item.lang === language) && (!bookmarkedOnly || bookmarks.includes(item.id));
+  }), [query, category, type, level, language, bookmarkedOnly, bookmarks]);
+  useEffect(() => { setLimit(24); }, [query, category, type, level, language, bookmarkedOnly]);
+  function reset() { setQuery(''); setCategory('all'); setType('全部类型'); setLevel('全部难度'); setLanguage('全部语言'); setBookmarkedOnly(false); }
   return (
     <>
       <PageTitle eyebrow="学习资源" title="资源库"
-        description={`按领域、难度和资料类型查找 ${resources.length} 条精选内容。优先收录官方文档、经典论文、课程与可复现项目。`}
+        description={`按领域、语言、难度和资料类型查找 ${resources.length} 条精选内容。包含 B 站视频、工程博客、免费书籍、官方文档与经典论文。`}
         actions={<button className={`btn ${bookmarkedOnly ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setBookmarkedOnly(!bookmarkedOnly)}><Bookmark size={16} />我的收藏 <span>{bookmarks.length}</span></button>} />
       <section className="library-controls">
         <label className="library-search"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索 vLLM、FSDP、NCCL、量化…" />{query && <button onClick={() => setQuery('')} aria-label="清空搜索"><X size={17} /></button>}</label>
         <div className="filter-row">
           <label><span>知识领域</span><select value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">全部领域</option>{modules.map((module) => <option value={module.id} key={module.id}>{module.title}</option>)}</select><ChevronDown size={15} /></label>
+          <label><span>资料语言</span><select value={language} onChange={(event) => setLanguage(event.target.value)}>{RESOURCE_LANGUAGES.map((item) => <option key={item}>{item}</option>)}</select><ChevronDown size={15} /></label>
           <label><span>难度</span><select value={level} onChange={(event) => setLevel(event.target.value)}><option>全部难度</option><option>入门</option><option>进阶</option><option>深入</option></select><ChevronDown size={15} /></label>
           <button className="reset-filter" onClick={reset}><RotateCcw size={15} />重置筛选</button>
         </div>
@@ -513,9 +594,9 @@ function ResourcesPage({ focus, bookmarks, toggleBookmark }) {
           <h2><a href={item.url} target="_blank" rel="noreferrer">{item.title}</a></h2><p>{item.description}</p>
           <div className="resource-card-foot"><span>{item.level} · {item.lang}</span><a href={item.url} target="_blank" rel="noreferrer" aria-label={`打开 ${item.title}`}><ArrowUpRight size={18} /></a></div>
         </article>;
-      })}</div> : <EmptyState title="没有找到匹配资料" description="试试更短的关键词，或清除领域与难度筛选。" action={<button className="btn btn-primary" onClick={reset}>清除筛选</button>} />}
+      })}</div> : <EmptyState title="没有找到匹配资料" description="试试更短的关键词，或清除领域、语言与难度筛选。" action={<button className="btn btn-primary" onClick={reset}>清除筛选</button>} />}
       {limit < filtered.length && <button className="load-more" onClick={() => setLimit((value) => value + 24)}>再显示 {Math.min(24, filtered.length - limit)} 条<ChevronDown size={17} /></button>}
-      <div className="library-note"><ShieldCheck size={17} /><p>链接会在新标签页打开，资料版本与正文以原站点为准。收藏只保存在当前浏览器，可以在“设置与备份”中导出。</p></div>
+      <div className="library-note"><ShieldCheck size={17} /><p>链接会在新标签页打开，资料版本、正文与可用性以原站点为准。收藏只保存在当前浏览器，可以在“设置与备份”中导出。</p></div>
     </>
   );
 }
@@ -747,16 +828,45 @@ function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, perso
 }
 
 function TopicDrawer({ module, topic, progress, setProgress, onClose, openResources }) {
-  const related = resources.filter((item) => item.category === module.id).slice(0, 4);
+  const [tab, setTab] = useState('learn');
+  useEffect(() => { setTab('learn'); }, [topic.id]);
+  const lesson = lessons[topic.id];
+  const related = lesson.resourceIds.map((id) => resources.find((item) => item.id === id)).filter(Boolean);
   const done = !!progress[topic.id];
+  const tabs = [
+    { id: 'learn', label: '学知识', icon: BookOpen },
+    { id: 'practice', label: '做练习', icon: ListChecks },
+    { id: 'resources', label: '看资料', icon: LibraryBig },
+  ];
   return <div className="drawer-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <aside className="topic-drawer"><div className="drawer-top"><span>{module.en} / TOPIC</span><button className="icon-btn" onClick={onClose}><X size={20} /></button></div>
-      <div className="drawer-module"><ModuleIcon module={module} size={22} />{module.title}</div><h2>{topic.title}</h2><p className="drawer-summary">{topic.summary}</p>
-      <div className="key-question"><span>KEY QUESTION</span><h3>{topic.question}</h3><p>先写下自己的答案，再阅读资料或设计实验。能解释边界与例外，比记住定义更重要。</p></div>
-      <div className="drawer-outcomes"><h3>完成这个领域后，你应该能够</h3>{module.outcomes.map((outcome) => <div key={outcome}><Check size={15} /><span>{outcome}</span></div>)}</div>
-      <div className="drawer-resources"><div><h3>相关入口</h3><button onClick={() => { onClose(); openResources(module.id); }}>查看全部 <ArrowRight size={14} /></button></div>{related.map((item) => <a href={item.url} target="_blank" rel="noreferrer" key={item.id}><span>{item.type}</span><strong>{item.title}</strong><ArrowUpRight size={16} /></a>)}</div>
+    <aside className="topic-drawer" role="dialog" aria-modal="true" aria-labelledby="topic-drawer-title">
+      <div className="drawer-top"><span>{module.en} / MICRO LESSON</span><button className="icon-btn" onClick={onClose} aria-label="关闭主题详情"><X size={20} /></button></div>
+      <div className="drawer-module"><ModuleIcon module={module} size={22} />{module.title}</div><h2 id="topic-drawer-title">{topic.title}</h2><p className="drawer-summary">{topic.summary}</p>
+      <div className="lesson-tabs" role="tablist" aria-label="主题学习步骤">{tabs.map((item) => { const Icon = item.icon; return <button key={item.id} id={`lesson-tab-${item.id}`} role="tab" aria-selected={tab === item.id} aria-controls={`lesson-panel-${item.id}`} className={tab === item.id ? 'active' : ''} onClick={() => setTab(item.id)}><Icon size={16} />{item.label}{item.id === 'resources' && <span>{related.length}</span>}</button>; })}</div>
+
+      {tab === 'learn' && <div className="drawer-tab-panel" id="lesson-panel-learn" role="tabpanel" aria-labelledby="lesson-tab-learn">
+        <div className="lesson-meta"><span><Clock3 size={14} />约 {lesson.minutes} 分钟</span><span>站内微课 · 无需跳转</span></div>
+        <article className="markdown-body lesson-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{lesson.content}</ReactMarkdown></article>
+        <div className="key-question"><span>KEY QUESTION</span><h3>{topic.question}</h3><p>先用自己的话回答，再去练习页核对自测答案。</p></div>
+        <button className="lesson-next-step" onClick={() => setTab('practice')}><span><ListChecks size={18} /><strong>读完去做一个小练习</strong></span><ArrowRight size={17} /></button>
+      </div>}
+
+      {tab === 'practice' && <div className="drawer-tab-panel" id="lesson-panel-practice" role="tabpanel" aria-labelledby="lesson-tab-practice">
+        <section className="practice-card practice-task"><span>01 / 动手练习</span><h3>完成这个小任务</h3><p>{lesson.practice}</p></section>
+        <section className="practice-card practice-expected"><CheckCircle2 size={20} /><div><span>02 / 如何验证</span><h3>做完应该看到什么</h3><p>{lesson.expected}</p></div></section>
+        <section className="practice-card practice-pitfall"><AlertTriangle size={20} /><div><span>03 / 常见误区</span><h3>检查有没有踩坑</h3><p>{lesson.pitfall}</p></div></section>
+        <section className="quiz-card"><span>SELF CHECK / 自测</span><h3>{lesson.quiz.question}</h3><p>先不看答案，用自己的话完整解释一次。</p><details><summary>查看参考答案 <ChevronDown size={16} /></summary><div>{lesson.quiz.answer}</div></details></section>
+        <button className="lesson-next-step" onClick={() => setTab('resources')}><span><LibraryBig size={18} /><strong>带着问题继续看精选资料</strong></span><ArrowRight size={17} /></button>
+      </div>}
+
+      {tab === 'resources' && <div className="drawer-tab-panel" id="lesson-panel-resources" role="tabpanel" aria-labelledby="lesson-tab-resources">
+        <div className="lesson-resource-intro"><span>按推荐顺序排列</span><p>不必一次全部看完。先选一种适合自己的形式，遇到具体问题时再查官方文档或论文。</p></div>
+        <div className="lesson-resources-list">{related.map((item, index) => <a href={item.url} target="_blank" rel="noreferrer" key={item.id} className="lesson-resource-card"><span className="lesson-resource-index">{String(index + 1).padStart(2, '0')}</span><div><div className="lesson-resource-tags"><span>{item.url.includes('bilibili.com') ? 'B 站视频' : item.type}</span><em>{item.lang} · {item.level}</em></div><h3>{item.title}</h3><p>{item.description}</p></div><ArrowUpRight size={18} /></a>)}</div>
+        <button className="lesson-next-step" onClick={() => { onClose(); openResources(module.id); }}><span><LibraryBig size={18} /><strong>查看「{module.title}」全部资源</strong></span><ArrowRight size={17} /></button>
+      </div>}
+
       <button className={`btn ${done ? 'btn-ghost' : 'btn-primary'} drawer-done`} onClick={() => setProgress((state) => ({ ...state, [topic.id]: !state[topic.id] }))}>{done ? <><RotateCcw size={17} />取消完成标记</> : <><CheckCircle2 size={17} />标记这个主题已学习</>}</button>
-      <p className="drawer-footnote">完成标记仅用于记录你的学习轨迹，不代表能力认证。</p>
+      <p className="drawer-footnote">建议完成微课、练习和自测后再标记；完成记录不代表能力认证。</p>
     </aside>
   </div>;
 }
@@ -770,15 +880,18 @@ function SearchPalette({ onClose, notes, openTopic, openResources, openLab, open
     if (!term) return [];
     const score = (text) => text.toLowerCase().includes(term);
     return [
-      ...ALL_TOPICS.filter((topic) => score(`${topic.title} ${topic.summary} ${topic.module.title}`)).map((topic) => ({ id: topic.id, kind: '知识主题', title: topic.title, subtitle: `${topic.module.title} · ${topic.summary}`, action: () => openTopic(topic.module, topic) })),
-      ...resources.filter((item) => score(`${item.title} ${item.description} ${item.type}`)).map((item) => ({ id: item.id, kind: '资源', title: item.title, subtitle: item.description, action: () => openResources(item.title) })),
+      ...ALL_TOPICS.filter((topic) => {
+        const lesson = lessons[topic.id];
+        return score(`${topic.title} ${topic.summary} ${topic.question} ${topic.module.title} ${lesson.content} ${lesson.practice} ${lesson.quiz.question}`);
+      }).map((topic) => ({ id: topic.id, kind: '站内微课', title: topic.title, subtitle: `${topic.module.title} · ${topic.summary}`, action: () => openTopic(topic.module, topic) })),
+      ...resources.filter((item) => score(`${item.title} ${item.description} ${item.type} ${item.lang}`)).map((item) => ({ id: item.id, kind: '资源', title: item.title, subtitle: item.description, action: () => openResources(item.title) })),
       ...labs.filter((lab) => score(`${lab.title} ${lab.subtitle} ${lab.goal}`)).map((lab) => ({ id: lab.id, kind: '实验', title: lab.title, subtitle: `${lab.level} · ${lab.subtitle}`, action: () => openLab(lab.id) })),
       ...notes.filter((note) => score(`${note.title} ${note.summary} ${note.body}`)).map((note) => ({ id: note.id, kind: '笔记', title: note.title, subtitle: note.summary, action: () => openNote(note.id) })),
     ].slice(0, 12);
   }, [query, notes]);
-  const suggestions = ['分布式训练', 'KV Cache', 'Triton', 'GPU 调度'];
+  const suggestions = ['学习率', '分布式训练', 'KV Cache', 'GPU 调度'];
   return <div className="modal-backdrop search-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="search-palette">
-    <label><Search size={22} /><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索全站知识、资源、实验与笔记…" /><kbd>ESC</kbd></label>
+    <label><Search size={22} /><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索全站微课、资源、实验与笔记…" /><kbd>ESC</kbd></label>
     {!query && <div className="search-start"><span>试试这些关键词</span><div>{suggestions.map((item) => <button key={item} onClick={() => setQuery(item)}>{item}</button>)}</div><p><Command size={13} /> K 随时唤起搜索 · 支持中文与英文项目名</p></div>}
     {query && <div className="search-results">{results.map((result) => <button key={`${result.kind}-${result.id}`} onClick={result.action}><span>{result.kind}</span><div><strong>{result.title}</strong><p>{result.subtitle}</p></div><ArrowRight size={17} /></button>)}{!results.length && <EmptyState title="没有找到相关内容" description="换一个关键词，或到资源库中按领域浏览。" />}</div>}
     {query && results.length > 0 && <div className="search-count">显示前 {results.length} 条结果</div>}

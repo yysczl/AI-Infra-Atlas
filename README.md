@@ -1,6 +1,6 @@
 # Infra Atlas · AI 基建学习站
 
-一个面向学习者的 AI Infra 教程网站。包含 14 个知识领域、56 个核心主题、92 条精选资源、9 个可照着操作的实验手册，以及可编辑的 Markdown 学习笔记。
+一个面向零基础学习者的 AI Infra 自学网站。包含 15 个知识领域、60 节带练习与自测的站内微课、126 条主题化精选资源、10 个可照着操作的实验手册，以及可编辑的 Markdown 学习笔记。新手可从第 0 步先修课和零 GPU 训练实验开始。
 
 ## 本地启动
 
@@ -43,6 +43,7 @@ npm run dev
 ### 维护课程、资源与实验
 
 - `src/content/curriculum.js`：知识领域、核心主题、学习路径、技术栈层级。
+- `src/content/lessons.js`：每个主题的站内微课，包含预计时长、Markdown 正文、练习、预期结果、常见误区、自测答案和有序 `resourceIds`；主题 ID 必须与课程一致。
 - `src/content/resources.json`：资源库，每条资源需要唯一 `id`、标题、URL、领域、类型、难度、语言和推荐理由。
 - `src/content/labs.js`：实验目标、步骤摘要、环境要求、记录指标与关联资料。
 - `src/content/lab-guides.js`：每个实验的环境检查、安全提醒、完整命令、预期结果、故障排查和清理说明。

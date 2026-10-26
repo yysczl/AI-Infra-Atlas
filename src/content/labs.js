@@ -1,5 +1,18 @@
 export const labs = [
   {
+    id: 'lab-first-train', number: '00', title: '零 GPU 跑通第一个训练循环', subtitle: '环境 · 自动求导 · 结果验证', level: '零基础', duration: '45–60 分钟', environment: 'macOS / Linux · Python · CPU PyTorch', moduleId: 'foundations',
+    goal: '在 CPU 上用合成数据学习 y = 3x + 1，理解预测、损失、反向传播和参数更新，并用三组学习率完成可复现对照。',
+    steps: [
+      { title: '准备独立虚拟环境', detail: '创建实验目录与 Python 虚拟环境，安装 PyTorch，并确认使用 CPU 即可运行。' },
+      { title: '编写最小训练脚本', detail: '生成带噪声的线性数据，用 SGD 更新 w 和 b，逐步记录损失与参数。' },
+      { title: '运行并验证结果', detail: '保存训练日志、JSON 结果和依赖版本，确认 w 接近 3、b 接近 1。' },
+      { title: '完成学习率对照', detail: '只改变 LR，比较 0.001、0.05 和 0.2，解释收敛速度而不预设越大越好。' },
+    ],
+    metrics: ['最终 loss', '学习到的 w 与 b', '三组学习率对照', '完整环境与原始日志'],
+    deliverable: '一个可重复运行的训练脚本、三组学习率结果、原始日志和 python-environment.txt。',
+    resourceIds: ['fw-d2l', 'fw-autograd-video', 'base-missing-semester'],
+  },
+  {
     id: 'lab-baseline', number: '01', title: '建立 AI 机器性能基线', subtitle: '先测量，再优化', level: '入门', duration: '2–3 小时', environment: 'Linux · 可选 NVIDIA GPU', moduleId: 'systems',
     goal: '记录 CPU、内存、磁盘和可选 NVIDIA GPU 的硬件信息，测量内存、顺序读与张量计算，形成后续实验的对照。',
     steps: [

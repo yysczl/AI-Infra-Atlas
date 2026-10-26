@@ -1,4 +1,124 @@
 export const labGuides = {
+  'lab-first-train': {
+    requirements: [
+      '一台可运行 Python 3.10+ 的普通电脑；不需要 NVIDIA GPU，也不需要 Linux 服务器。',
+      '以下命令以 macOS 或 Linux 终端为例，磁盘至少预留 3 GB 用于虚拟环境和 PyTorch。',
+      '能理解最基础的 Python 变量与命令行路径即可；遇到陌生命令时先阅读注释再运行。',
+    ],
+    safety: '所有文件都写入你新建的 first-training 目录。不要对系统 Python 使用 sudo 安装依赖；若安装源或版本有组织要求，请先按本机规范调整。',
+    steps: [
+      {
+        blocks: [{ title: '终端：创建隔离环境', code: `mkdir -p first-training && cd first-training
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install torch
+python -c "import torch; print('PyTorch:', torch.__version__); print('本次使用 CPU，张量设备:', torch.tensor([1]).device)"` }],
+        expected: '最后打印 PyTorch 版本和 cpu。命令行提示符通常出现 (.venv)，说明后续依赖只安装到当前项目环境。',
+        note: '之后的命令都默认在 first-training 目录且虚拟环境已激活。重新打开终端后，先执行 cd first-training 和 source .venv/bin/activate。',
+      },
+      {
+        blocks: [{ title: '终端：保存最小训练脚本', code: `cat > train.py <<'PY'
+import json
+import os
+from pathlib import Path
+
+import torch
+import torch.nn.functional as F
+
+learning_rate = float(os.environ.get('LR', '0.05'))
+if learning_rate <= 0:
+    raise ValueError('LR 必须是正数')
+
+torch.manual_seed(42)
+torch.set_num_threads(1)
+x = torch.randn(512, 1)
+y = 3 * x + 1 + 0.1 * torch.randn_like(x)
+
+w = torch.zeros(1, 1, requires_grad=True)
+b = torch.zeros(1, requires_grad=True)
+optimizer = torch.optim.SGD([w, b], lr=learning_rate)
+history = []
+
+for step in range(1, 201):
+    optimizer.zero_grad()
+    prediction = x @ w + b
+    loss = F.mse_loss(prediction, y)
+    loss.backward()
+    optimizer.step()
+    if step == 1 or step % 20 == 0:
+        row = {
+            'step': step,
+            'loss': round(loss.item(), 6),
+            'w': round(w.item(), 6),
+            'b': round(b.item(), 6),
+        }
+        history.append(row)
+        print(row)
+
+result = {
+    'learning_rate': learning_rate,
+    'samples': len(x),
+    'steps': 200,
+    'seed': 42,
+    'device': 'cpu',
+    'torch_version': torch.__version__,
+    'final': history[-1],
+    'history': history,
+}
+output = Path('results') / f'lr-{learning_rate}.json'
+output.parent.mkdir(exist_ok=True)
+output.write_text(json.dumps(result, indent=2), encoding='utf-8')
+print('结果已保存到', output)
+PY` }],
+        expected: '目录中出现 train.py。x @ w + b 是预测，mse_loss 衡量误差，backward 计算梯度，optimizer.step 根据梯度更新 w 和 b。',
+        note: '这里故意不下载数据集：真实关系约为 y = 3x + 1，方便判断训练是否学到了正确答案。噪声使最终 loss 不必等于 0。',
+      },
+      {
+        blocks: [{ title: '终端：运行基线并保存证据', code: `LR=0.05 python train.py 2>&1 | tee results-lr-0.05.log
+python -m pip freeze > python-environment.txt
+python - <<'PY'
+import json
+result = json.load(open('results/lr-0.05.json'))
+final = result['final']
+print('最终参数:', final)
+assert abs(final['w'] - 3) < 0.1, 'w 尚未接近 3，请检查训练日志'
+assert abs(final['b'] - 1) < 0.1, 'b 尚未接近 1，请检查训练日志'
+assert final['loss'] < 0.02, 'loss 偏高，请检查是否完整运行 200 步'
+print('PASS: 参数和损失符合本实验预期')
+PY` }],
+        expected: '训练日志显示 loss 总体下降，w 接近 3、b 接近 1，自动断言打印 PASS；同时生成 results/lr-0.05.json、results-lr-0.05.log 和 python-environment.txt。',
+        note: '数值可能因 PyTorch 版本或平台略有差异。断言只用于这份固定合成数据，不是其他训练任务的通用阈值。',
+      },
+      {
+        blocks: [{ title: '终端：只改变学习率并汇总', code: `for lr in 0.001 0.2; do
+  LR="$lr" python train.py 2>&1 | tee "results-lr-$lr.log"
+done
+python - <<'PY'
+import json
+from pathlib import Path
+
+rows = []
+for lr in ('0.001', '0.05', '0.2'):
+    result = json.loads(Path(f'results/lr-{lr}.json').read_text())
+    row = {'lr': lr, **result['final']}
+    rows.append(row)
+    print(f"LR={lr:>5}  loss={row['loss']:.6f}  w={row['w']:.4f}  b={row['b']:.4f}")
+Path('results/comparison.json').write_text(json.dumps(rows, indent=2), encoding='utf-8')
+PY` }],
+        expected: '三组实验只有 LR 不同，生成 comparison.json。通常 0.001 在 200 步内学习较慢，0.05 和 0.2 更接近目标；请用自己的日志解释，而不是照抄预期。',
+        note: '最后写下：学习率控制了哪一步？为什么本实验中较大的学习率更快，却不能推导出任何任务都应该无限增大学习率？',
+      },
+    ],
+    troubleshooting: [
+      { problem: 'python3: command not found', solution: '先安装 Python 3.10 或更新版本，并确认终端中的 python3 指向该安装；不要直接删除系统已有 Python。' },
+      { problem: '安装 PyTorch 时网络或磁盘失败', solution: '保留完整报错，检查网络、代理、安装源和剩余磁盘；不要在多个目录反复安装，也不要使用 sudo pip 掩盖权限问题。' },
+      { problem: 'w、b 没有接近目标', solution: '检查是否完整执行 200 步、是否误改了数据或优化器，并打开 JSON 查看 history；0.001 学得慢是可用于对照的结果，不应伪造为通过基线断言。' },
+      { problem: 'loss 出现 NaN 或不断增大', solution: '先确认只修改了 LR，记录该学习率和完整日志；检查是否输入了极大 LR。把发散作为学习率不稳定的现象分析，而不是删除失败结果。' },
+    ],
+    cleanup: '先备份 train.py、results、三份日志和 python-environment.txt。退出虚拟环境可运行 deactivate；确认结果已备份后，可删除整个 first-training 目录释放空间。',
+  },
+
   'lab-baseline': {
     requirements: [
       '一台可执行测试的 Linux 机器；以下安装命令以 Ubuntu / Debian 为例。',

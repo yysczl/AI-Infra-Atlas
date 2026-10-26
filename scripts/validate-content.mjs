@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { learningPaths, modules, stackLayers } from '../src/content/curriculum.js';
+import { lessons } from '../src/content/lessons.js';
 import { labs } from '../src/content/labs.js';
 import { labGuides } from '../src/content/lab-guides.js';
 
@@ -43,6 +44,26 @@ resources.forEach((resource) => {
   if (!moduleIds.has(resource.category)) errors.push(`资源 ${resource.id} 的 category 无效：${resource.category}`);
   try { new URL(resource.url); } catch { errors.push(`资源 ${resource.id} 的 URL 无效`); }
 });
+topicIds.forEach((id) => {
+  const lesson = lessons[id];
+  if (!lesson) {
+    errors.push(`主题 ${id} 缺少站内微课`);
+    return;
+  }
+  required(lesson, ['minutes', 'content', 'practice', 'expected', 'pitfall', 'quiz', 'resourceIds'], `微课 ${id}`);
+  if (!Number.isFinite(lesson.minutes) || lesson.minutes <= 0) errors.push(`微课 ${id} 的 minutes 必须是正数`);
+  required(lesson.quiz || {}, ['question', 'answer'], `微课 ${id} 自测`);
+  if (!Array.isArray(lesson.resourceIds) || lesson.resourceIds.length === 0) {
+    errors.push(`微课 ${id} 缺少有序学习资源`);
+  } else {
+    lesson.resourceIds.forEach((resourceId) => {
+      if (!resourceIds.has(resourceId)) errors.push(`微课 ${id} 引用了无效资源 ${resourceId}`);
+    });
+  }
+});
+Object.keys(lessons).forEach((id) => {
+  if (!topicIds.has(id)) errors.push(`微课 ${id} 没有对应主题`);
+});
 learningPaths.forEach((path) => path.moduleIds.forEach((id) => {
   if (!moduleIds.has(id)) errors.push(`学习路径 ${path.id} 引用了无效领域 ${id}`);
 }));
@@ -80,4 +101,4 @@ if (errors.length) {
   errors.forEach((error) => console.error(`  - ${error}`));
   process.exit(1);
 }
-console.log(`内容校验通过：${modules.length} 个领域，${topicIds.size} 个主题，${resources.length} 条资源，${labs.length} 个实验及完整操作指南。`);
+console.log(`内容校验通过：${modules.length} 个领域，${topicIds.size} 个主题，${Object.keys(lessons).length} 节完整微课，${resources.length} 条资源，${labs.length} 个实验及完整操作指南。`);

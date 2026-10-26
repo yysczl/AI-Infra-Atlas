@@ -49,16 +49,37 @@ try {
 
   await page.goto(`${base}/#/dashboard`, { waitUntil: 'domcontentloaded' });
   await page.locator('.hero h1').waitFor();
-  assert(await page.locator('.module-card').count() === 14, '首页知识领域数量不正确');
+  assert(await page.locator('.module-card').count() === 15, '首页知识领域数量不正确');
   await page.screenshot({ path: join(artifacts, 'dashboard-desktop.png'), fullPage: true });
-  console.log('✓ 首页、统计与 14 个知识领域');
+  console.log('✓ 首页、统计与 15 个知识领域');
+
+  await nav('新手起步');
+  await page.locator('.start-hero h1').waitFor();
+  assert(await page.locator('.foundation-grid > button').count() === 4, '新手先修课入口数量不正确');
+  assert(await page.locator('.week-plan > button').count() === 7, '第一周学习计划不完整');
+  await page.screenshot({ path: join(artifacts, 'start-desktop.png'), fullPage: true, animations: 'disabled' });
+  await page.locator('.foundation-grid > button').first().click();
+  await page.locator('.topic-drawer .lesson-markdown').waitFor();
+  assert(await page.getByRole('tab').count() === 3, '主题微课缺少学习标签页');
+  assert((await page.locator('.lesson-markdown').innerText()).includes('必须掌握的六组概念'), '第一课站内正文未显示');
+  await page.screenshot({ path: join(artifacts, 'lesson-desktop.png'), fullPage: false, animations: 'disabled' });
+  await page.getByRole('tab', { name: '做练习', exact: true }).click();
+  assert(await page.locator('.practice-card').count() === 3, '微课练习、验证或误区不完整');
+  await page.locator('.quiz-card summary').click();
+  assert(await page.locator('.quiz-card details > div').isVisible(), '自测参考答案无法展开');
+  await page.getByRole('tab', { name: /看资料/ }).click();
+  assert(await page.locator('.lesson-resource-card').count() >= 3, '主题资料未按微课映射显示');
+  assert((await page.locator('.lesson-resource-card').first().getAttribute('href')).includes('bilibili.com'), '第一课未优先推荐入门视频');
+  await page.getByRole('button', { name: '关闭主题详情' }).click();
+  console.log('✓ 新手页、七天计划、站内微课、练习自测与主题资料');
 
   await page.locator('.search-trigger').click();
-  await page.locator('.search-palette input').fill('KV Cache');
+  await page.locator('.search-palette input').fill('重试风暴');
   await page.locator('.search-results > button').first().waitFor();
   assert(await page.locator('.search-results > button').count() > 0, '全局搜索没有结果');
+  assert((await page.locator('.search-results').innerText()).includes('站内微课'), '搜索未覆盖微课正文与自测');
   await page.keyboard.press('Escape');
-  console.log('✓ 全局搜索与快捷键关闭');
+  console.log('✓ 微课全文搜索与快捷键关闭');
 
   await nav('资源库');
   await page.locator('.resource-card').first().waitFor();
@@ -68,20 +89,32 @@ try {
   assert(await page.locator('.resource-card').count() > 0, '资源筛选没有结果');
   await page.locator('.resource-card-top button').first().click();
   assert(await page.evaluate(() => JSON.parse(localStorage.getItem('infra-atlas-bookmarks-v1') || '[]').length > 0), '收藏未保存');
-  console.log('✓ 资源分页、搜索筛选与收藏持久化');
+  await page.locator('.reset-filter').click();
+  await page.locator('.filter-row label').filter({ hasText: '资料语言' }).locator('select').selectOption('中文');
+  await delay(250);
+  assert(await page.locator('.resource-card').count() > 0, '中文资源筛选没有结果');
+  const languageLabels = await page.locator('.resource-card-foot > span').allTextContents();
+  assert(languageLabels.every((text) => text.includes('中文')), '语言筛选混入了非中文资料');
+  console.log('✓ 资源分页、搜索、语言筛选与收藏持久化');
 
   await nav('学习路径');
   await page.locator('.topic-check').first().click();
-  assert(await page.evaluate(() => JSON.parse(localStorage.getItem('infra-atlas-progress-v1') || '{}')['sys-os'] === true), '学习进度未写入');
+  assert(await page.evaluate(() => JSON.parse(localStorage.getItem('infra-atlas-progress-v1') || '{}')['base-linux'] === true), '学习进度未写入');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('.topic-list article.is-done').first().waitFor();
   console.log('✓ 学习进度刷新后保留');
 
   await nav('动手实验');
+  await page.locator('.lab-manual-head h2').filter({ hasText: '零 GPU 跑通第一个训练循环' }).waitFor();
   await page.locator('.lab-step').first().waitFor();
   assert(await page.locator('.lab-step').count() === 4, '实验操作步骤数量不正确');
   assert(await page.locator('.lab-prepare li').count() > 0, '实验缺少环境检查');
   assert(await page.locator('.step-expected').count() === 4, '实验缺少结果验证说明');
+  const firstTrainingGuide = await page.locator('.lab-manual').innerText();
+  assert(firstTrainingGuide.includes('LR=0.05') && firstTrainingGuide.includes('python -m pip freeze'), '零 GPU 实验缺少学习率基线或环境记录');
+  await page.screenshot({ path: join(artifacts, 'lab-first-train-desktop.png'), fullPage: true, animations: 'disabled' });
+  await page.locator('.lab-catalog > button').filter({ hasText: '建立 AI 机器性能基线' }).click();
+  await page.locator('.lab-manual-head h2').filter({ hasText: '建立 AI 机器性能基线' }).waitFor();
   await page.locator('.lab-step-head').first().click();
   assert(await page.evaluate(() => (JSON.parse(localStorage.getItem('infra-atlas-labs-v1') || '{}')['lab-baseline'] || []).includes(0)), '实验步骤未保存');
   await page.locator('.code-block-head button').first().click();
@@ -124,13 +157,14 @@ try {
   await page.evaluate(() => localStorage.setItem('infra-atlas-theme-v1', JSON.stringify('light')));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  for (const route of ['dashboard', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance']) {
+  for (const route of ['dashboard', 'start', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance']) {
     await page.goto(`${base}/#/${route}`, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => window.scrollTo(0, 0));
     await delay(300);
     const dimensions = await page.evaluate(() => ({ width: window.innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     assert(dimensions.scrollWidth <= dimensions.width + 1, `${route} 手机端存在横向溢出：${dimensions.scrollWidth}/${dimensions.width}`);
     if (route === 'dashboard') await page.screenshot({ path: join(artifacts, 'dashboard-mobile.png'), fullPage: true, animations: 'disabled' });
+    if (route === 'start') await page.screenshot({ path: join(artifacts, 'start-mobile.png'), fullPage: true, animations: 'disabled' });
     if (route === 'resources') await page.screenshot({ path: join(artifacts, 'resources-mobile.png'), fullPage: false, animations: 'disabled' });
     if (route === 'labs') {
       const layout = await page.evaluate(() => {
@@ -143,11 +177,20 @@ try {
       await page.screenshot({ path: join(artifacts, 'labs-mobile.png'), fullPage: true, animations: 'disabled' });
     }
   }
+  await page.goto(`${base}/#/start`, { waitUntil: 'domcontentloaded' });
+  await page.locator('.foundation-grid > button').first().click();
+  await page.locator('.topic-drawer .lesson-markdown').waitFor();
+  const lessonDimensions = await page.evaluate(() => ({ width: window.innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+  assert(lessonDimensions.scrollWidth <= lessonDimensions.width + 1, `手机微课存在横向溢出：${lessonDimensions.scrollWidth}/${lessonDimensions.width}`);
+  await page.screenshot({ path: join(artifacts, 'lesson-mobile.png'), fullPage: false, animations: 'disabled' });
+  await page.getByRole('tab', { name: '做练习', exact: true }).click();
+  assert(await page.locator('.quiz-card').isVisible(), '手机端无法打开微课自测');
+  await page.getByRole('button', { name: '关闭主题详情' }).click();
   await page.goto(`${base}/#/dashboard`, { waitUntil: 'domcontentloaded' });
   await page.locator('.mobile-menu').click();
   assert(await page.locator('.sidebar.is-open').isVisible(), '手机导航未打开');
   await page.locator('.nav-scrim').click({ position: { x: 380, y: 100 } });
-  console.log('✓ 7 个页面的手机端布局与移动导航');
+  console.log('✓ 8 个页面、手机微课与移动导航');
 
   assert(runtimeErrors.length === 0, `浏览器运行错误：${runtimeErrors.join(' | ')}`);
   console.log('✓ 没有捕获到浏览器运行错误');

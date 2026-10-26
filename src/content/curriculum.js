@@ -1,5 +1,17 @@
 export const modules = [
   {
+    id: 'foundations', order: 0, title: '新手先修课', en: 'FOUNDATIONS', layer: '第 0 步', level: '入门', hours: 18,
+    brief: '从命令行、Python 和第一个训练循环开始。',
+    description: '不要求你先懂 AI Infra，也不要求一开始就有 GPU。先补齐命令行、Python、训练循环和实验记录四块基础，再进入系统与硬件。',
+    outcomes: ['能在终端管理文件、进程和 Python 环境', '能读懂并运行一个最小 PyTorch 训练循环', '能保存代码版本、实验配置和结果并复现'],
+    topics: [
+      { id: 'base-linux', title: 'Linux 命令行与 Git', summary: '学会目录、文件、管道、进程、权限和版本提交，能独立完成后续实验的基本操作。', question: '为什么实验排障时，保存完整命令和原始日志比只截一张报错图更有用？' },
+      { id: 'base-python', title: 'Python 环境与张量基础', summary: '理解虚拟环境、包版本、函数、数据结构，以及张量的 shape、dtype 和 device。', question: '为什么“代码在我电脑上能跑”不等于别人也能复现同一个实验？' },
+      { id: 'base-ml', title: '看懂第一个训练循环', summary: '串起数据、前向计算、损失、反向传播和参数更新，分清训练与推理。', question: 'loss 下降时，模型参数、梯度和优化器状态分别发生了什么变化？' },
+      { id: 'base-workflow', title: '可复现实验的学习方法', summary: '固定种子、记录配置、保存原始结果，一次只改变一个变量，用证据回答性能问题。', question: '如果两次实验同时换了模型、 batch 和精度，为什么无法判断提速来自哪里？' },
+    ],
+  },
+  {
     id: 'systems', order: 1, title: '系统基础', en: 'SYSTEMS', layer: '基础底座', level: '入门', hours: 24,
     brief: '先理解机器如何执行，再理解 AI 为何昂贵。',
     description: '建立操作系统、体系结构、网络与性能分析的共同语言，能定位瓶颈发生在计算、内存、I/O 还是通信。',
@@ -170,11 +182,12 @@ export const modules = [
 ];
 
 export const learningPaths = [
-  { id: 'p1', phase: '01', title: '建立系统直觉', duration: '第 1–3 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 磁盘性能基线报告。' },
-  { id: 'p2', phase: '02', title: '吃透单卡执行', duration: '第 4–7 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，能用 profile 提出假设，再用对照实验验证。', project: '优化一个融合算子，并提交正确性与性能对照。' },
-  { id: 'p3', phase: '03', title: '跨越多机训练', duration: '第 8–12 周', moduleIds: ['distributed', 'network', 'data'], goal: '理解并行策略、通信和存储如何共同决定扩展效率。', project: '设计并验证一套多机训练、Checkpoint 与故障恢复方案。' },
-  { id: 'p4', phase: '04', title: '做好在线推理', duration: '第 13–17 周', moduleIds: ['inference', 'serving'], goal: '能针对流量与 SLO 调整引擎、批处理、缓存、量化和容量。', project: '完成一次真实流量分布的推理压测与容量规划。' },
-  { id: 'p5', phase: '05', title: '走向生产平台', duration: '第 18–22 周', moduleIds: ['platform', 'observability'], goal: '让 GPU 工作负载可调度、可观测、可回滚、可演练。', project: '部署带指标、告警和故障演练的 GPU 服务。' },
+  { id: 'p0', phase: '00', title: '补齐新手先修基础', duration: '第 1–2 周', moduleIds: ['foundations'], goal: '从命令行、Python 和第一个训练循环起步，不需要 GPU 也能完成。', project: '跑通一个零 GPU 训练实验，保存代码、依赖版本、三次对照结果和复盘。' },
+  { id: 'p1', phase: '01', title: '建立系统直觉', duration: '第 3–5 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 磁盘性能基线报告。' },
+  { id: 'p2', phase: '02', title: '吃透单卡执行', duration: '第 6–9 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，能用 profile 提出假设，再用对照实验验证。', project: '优化一个融合算子，并提交正确性与性能对照。' },
+  { id: 'p3', phase: '03', title: '跨越多机训练', duration: '第 10–14 周', moduleIds: ['distributed', 'network', 'data'], goal: '理解并行策略、通信和存储如何共同决定扩展效率。', project: '设计并验证一套多机训练、Checkpoint 与故障恢复方案。' },
+  { id: 'p4', phase: '04', title: '做好在线推理', duration: '第 15–19 周', moduleIds: ['inference', 'serving'], goal: '能针对流量与 SLO 调整引擎、批处理、缓存、量化和容量。', project: '完成一次真实流量分布的推理压测与容量规划。' },
+  { id: 'p5', phase: '05', title: '走向生产平台', duration: '第 20–24 周', moduleIds: ['platform', 'observability'], goal: '让 GPU 工作负载可调度、可观测、可回滚、可演练。', project: '部署带指标、告警和故障演练的 GPU 服务。' },
   { id: 'p6', phase: '06', title: '完成一个应用基础设施项目', duration: '长期迭代', moduleIds: ['rag', 'mlops', 'governance'], goal: '为一个 RAG 应用补上检索评测、工具权限测试、发布记录和成本估算。', project: '发布一篇完整架构复盘：约束、方案、数据、失败与下一步。' },
 ];
 
@@ -184,5 +197,5 @@ export const stackLayers = [
   { id: 'train', name: '训练与数据', en: 'TRAINING', moduleIds: ['distributed', 'network', 'data'], items: ['并行策略', '集合通信', '数据与 Checkpoint'] },
   { id: 'runtime', name: '框架与编译', en: 'RUNTIME', moduleIds: ['frameworks', 'kernels'], items: ['PyTorch / JAX', 'CUDA / Triton', 'MLIR / XLA'] },
   { id: 'platform', name: '平台与可靠性', en: 'PLATFORM', moduleIds: ['platform', 'observability'], items: ['K8s / Slurm / Ray', '监控与 Trace', 'SRE'] },
-  { id: 'hardware', name: '系统与硬件', en: 'FOUNDATION', moduleIds: ['systems', 'hardware'], items: ['OS / 体系结构', 'GPU / TPU', '内存与互联'] },
+  { id: 'hardware', name: '先修、系统与硬件', en: 'FOUNDATION', moduleIds: ['foundations', 'systems', 'hardware'], items: ['Python / Linux', 'OS / 体系结构', 'GPU / TPU'] },
 ];

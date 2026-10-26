@@ -13,7 +13,7 @@ async function check(resource) {
   const timer = setTimeout(() => controller.abort(), 12000);
   try {
     let response = await fetch(resource.url, { method: 'HEAD', redirect: 'follow', signal: controller.signal, headers: { 'user-agent': 'Infra-Atlas-Link-Check/1.0' } });
-    if ([400, 403, 405].includes(response.status)) {
+    if ([400, 403, 404, 405, 410].includes(response.status)) {
       response = await fetch(resource.url, { method: 'GET', redirect: 'follow', signal: controller.signal, headers: { 'user-agent': 'Infra-Atlas-Link-Check/1.0' } });
     }
     return { resource, status: response.status, ok: response.ok, finalUrl: response.url };
