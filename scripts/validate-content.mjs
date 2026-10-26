@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { learningPaths, modules, stackLayers } from '../src/content/curriculum.js';
 import { labs } from '../src/content/labs.js';
+import { labGuides } from '../src/content/lab-guides.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const resources = JSON.parse(readFileSync(join(root, 'src/content/resources.json'), 'utf8'));
@@ -52,6 +53,22 @@ labs.forEach((lab) => {
   required(lab, ['id', 'title', 'level', 'duration', 'environment', 'moduleId', 'goal', 'steps', 'deliverable'], `实验 ${lab.id || 'unknown'}`);
   if (!moduleIds.has(lab.moduleId)) errors.push(`实验 ${lab.id} 的 moduleId 无效`);
   lab.resourceIds.forEach((id) => { if (!resourceIds.has(id)) errors.push(`实验 ${lab.id} 引用了无效资源 ${id}`); });
+  const guide = labGuides[lab.id];
+  if (!guide) {
+    errors.push(`实验 ${lab.id} 缺少完整操作指南`);
+    return;
+  }
+  required(guide, ['requirements', 'safety', 'steps', 'troubleshooting', 'cleanup'], `实验指南 ${lab.id}`);
+  if (!Array.isArray(guide.requirements) || guide.requirements.length === 0) errors.push(`实验指南 ${lab.id} 缺少环境要求`);
+  if (!Array.isArray(guide.steps) || guide.steps.length !== lab.steps.length) errors.push(`实验指南 ${lab.id} 的步骤数与实验摘要不一致`);
+  guide.steps?.forEach((step, index) => {
+    if (!step.blocks?.length && !step.expected) errors.push(`实验指南 ${lab.id} 第 ${index + 1} 步缺少命令或验证方式`);
+    if (!step.expected) errors.push(`实验指南 ${lab.id} 第 ${index + 1} 步缺少结果验证`);
+    step.blocks?.forEach((block) => required(block, ['title', 'code'], `实验指南 ${lab.id} 第 ${index + 1} 步`));
+  });
+});
+Object.keys(labGuides).forEach((id) => {
+  if (!labs.some((lab) => lab.id === id)) errors.push(`实验指南 ${id} 没有对应实验`);
 });
 readdirSync(join(root, 'src/content/notes')).filter((name) => name.endsWith('.md')).forEach((name) => {
   const raw = readFileSync(join(root, 'src/content/notes', name), 'utf8');
@@ -63,4 +80,4 @@ if (errors.length) {
   errors.forEach((error) => console.error(`  - ${error}`));
   process.exit(1);
 }
-console.log(`内容校验通过：${modules.length} 个领域，${topicIds.size} 个主题，${resources.length} 条资源，${labs.length} 个实验。`);
+console.log(`内容校验通过：${modules.length} 个领域，${topicIds.size} 个主题，${resources.length} 条资源，${labs.length} 个实验及完整操作指南。`);

@@ -77,12 +77,30 @@ try {
   await page.locator('.topic-list article.is-done').first().waitFor();
   console.log('✓ 学习进度刷新后保留');
 
-  await nav('实战实验室');
-  await page.locator('.lab-steps > button').first().click();
+  await nav('动手实验');
+  await page.locator('.lab-step').first().waitFor();
+  assert(await page.locator('.lab-step').count() === 4, '实验操作步骤数量不正确');
+  assert(await page.locator('.lab-prepare li').count() > 0, '实验缺少环境检查');
+  assert(await page.locator('.step-expected').count() === 4, '实验缺少结果验证说明');
+  await page.locator('.lab-step-head').first().click();
   assert(await page.evaluate(() => (JSON.parse(localStorage.getItem('infra-atlas-labs-v1') || '{}')['lab-baseline'] || []).includes(0)), '实验步骤未保存');
-  console.log('✓ 实验清单与进度保存');
+  await page.locator('.code-block-head button').first().click();
+  await page.getByRole('button', { name: '已复制' }).first().waitFor();
+  const [reportDownload] = await Promise.all([page.waitForEvent('download'), page.locator('.deliverable > button').click()]);
+  assert(reportDownload.suggestedFilename().endsWith('.md'), '实验记录模板未正确下载');
+  await page.locator('.lab-catalog > button').filter({ hasText: '做一次可信的 LLM 推理压测' }).click();
+  await page.locator('.lab-manual-head h2').filter({ hasText: '做一次可信的 LLM 推理压测' }).waitFor();
+  assert(await page.locator('.code-block').count() >= 6, 'vLLM 实验缺少完整命令');
+  await page.screenshot({ path: join(artifacts, 'lab-serving-desktop.png'), fullPage: true });
+  await page.locator('.lab-catalog > button').filter({ hasText: 'FSDP2 分片与 Checkpoint 恢复' }).click();
+  await page.locator('.lab-manual-head h2').filter({ hasText: 'FSDP2 分片与 Checkpoint 恢复' }).waitFor();
+  const fsdpGuide = await page.locator('.lab-manual').innerText();
+  assert(fsdpGuide.includes('acc295dc7b90714f1bf47f06004fc19a7fe235c4'), 'FSDP 实验未显示固定的官方版本');
+  assert(!fsdpGuide.includes('fsdp2_trace'), 'FSDP 实验仍引用当前示例不会生成的 Trace 文件');
+  await page.screenshot({ path: join(artifacts, 'lab-fsdp-desktop.png'), fullPage: true, animations: 'disabled' });
+  console.log('✓ 完整实验步骤、命令复制、结果验证、模板下载与进度保存');
 
-  await nav('个人笔记');
+  await nav('我的笔记');
   await page.getByRole('button', { name: '新建笔记' }).click();
   await page.locator('.editor-title').fill('UI 自动化验收笔记');
   await page.locator('.editor-fields input').nth(1).fill('测试, 本地笔记');
@@ -94,12 +112,14 @@ try {
   assert(markdownDownload.suggestedFilename().endsWith('.md'), 'Markdown 导出文件名不正确');
   console.log('✓ 新建笔记、Markdown 渲染、保存与导出');
 
-  await nav('更新与备份');
+  await nav('设置与备份');
+  assert(!(await page.locator('body').innerText()).includes('这不是成品站'), '设置页仍包含已移除的抽象文案');
   const [backupDownload] = await Promise.all([page.waitForEvent('download'), page.locator('.backup-panel .btn-primary').click()]);
   assert(backupDownload.suggestedFilename().endsWith('.json'), '备份导出文件名不正确');
   await page.locator('.topbar-actions .icon-btn').click();
   assert(await page.evaluate(() => document.documentElement.dataset.theme === 'dark'), '暗色主题切换失败');
-  console.log('✓ 整站备份与明暗主题');
+  await page.screenshot({ path: join(artifacts, 'settings-dark.png'), fullPage: true, animations: 'disabled' });
+  console.log('✓ 用户设置、整站备份与明暗主题');
 
   await page.evaluate(() => localStorage.setItem('infra-atlas-theme-v1', JSON.stringify('light')));
   await page.setViewportSize({ width: 390, height: 844 });
@@ -112,6 +132,16 @@ try {
     assert(dimensions.scrollWidth <= dimensions.width + 1, `${route} 手机端存在横向溢出：${dimensions.scrollWidth}/${dimensions.width}`);
     if (route === 'dashboard') await page.screenshot({ path: join(artifacts, 'dashboard-mobile.png'), fullPage: true, animations: 'disabled' });
     if (route === 'resources') await page.screenshot({ path: join(artifacts, 'resources-mobile.png'), fullPage: false, animations: 'disabled' });
+    if (route === 'labs') {
+      const layout = await page.evaluate(() => {
+        const manual = document.querySelector('.lab-manual').getBoundingClientRect();
+        const catalog = document.querySelector('.lab-catalog').getBoundingClientRect();
+        return { manualWidth: manual.width, manualTop: manual.top, catalogBottom: catalog.bottom };
+      });
+      assert(layout.manualWidth > 300, `手机实验正文过窄：${Math.round(layout.manualWidth)}px`);
+      assert(layout.catalogBottom <= layout.manualTop + 1, '手机实验目录应位于正文上方');
+      await page.screenshot({ path: join(artifacts, 'labs-mobile.png'), fullPage: true, animations: 'disabled' });
+    }
   }
   await page.goto(`${base}/#/dashboard`, { waitUntil: 'domcontentloaded' });
   await page.locator('.mobile-menu').click();

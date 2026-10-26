@@ -1,29 +1,30 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity, ArrowRight, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck,
-  BookOpen, Boxes, Braces, Cable, Check, CheckCircle2, ChevronDown,
-  ChevronRight, Circle, CircleGauge, Clock3, Command, Copy, Cpu, Database,
-  Download, Edit3, ExternalLink, FileText, FlaskConical, GitBranch, HardDrive,
-  Layers3, LayoutDashboard, LibraryBig, Map, Menu, Moon, Network, NotebookPen,
+  Activity, AlertTriangle, ArrowRight, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck,
+  BookOpen, Boxes, Braces, Cable, Check, CheckCircle2, ChevronDown, ChevronLeft,
+  ChevronRight, Circle, CircleHelp, Clock3, Command, Copy, Cpu, Database,
+  Download, Edit3, FileText, FlaskConical, GitBranch, HardDrive,
+  Layers3, LayoutDashboard, LibraryBig, ListChecks, Map, Menu, Moon, Network, NotebookPen,
   Plus, RotateCcw, Save, ScanSearch, Search, Server, Settings2, ShieldCheck,
-  Sparkles, SquareTerminal, Sun, Trash2, Upload, Workflow, X, Zap,
+  SquareTerminal, Sun, Trash2, Upload, Workflow, X, Zap,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { learningPaths, modules, stackLayers } from './content/curriculum.js';
 import resources from './content/resources.json';
 import { labs } from './content/labs.js';
+import { labGuides } from './content/lab-guides.js';
 import { builtInNotes } from './content/notes.js';
 
 const PAGE_IDS = ['dashboard', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
 const PAGE_META = {
-  dashboard: { label: '学习总览', eyebrow: 'WORKSPACE' },
-  curriculum: { label: '学习路径', eyebrow: 'LEARNING PATH' },
-  map: { label: '知识地图', eyebrow: 'KNOWLEDGE ATLAS' },
-  resources: { label: '资源库', eyebrow: 'CURATED LIBRARY' },
-  labs: { label: '实战实验室', eyebrow: 'HANDS-ON LABS' },
-  notes: { label: '个人笔记', eyebrow: 'YOUR KNOWLEDGE' },
-  maintenance: { label: '更新与备份', eyebrow: 'CONTENT STUDIO' },
+  dashboard: { label: '首页', eyebrow: '学习首页' },
+  curriculum: { label: '学习路径', eyebrow: '课程' },
+  map: { label: '知识地图', eyebrow: '知识地图' },
+  resources: { label: '资源库', eyebrow: '资源库' },
+  labs: { label: '动手实验', eyebrow: '实验教程' },
+  notes: { label: '我的笔记', eyebrow: '笔记' },
+  maintenance: { label: '设置与备份', eyebrow: '设置' },
 };
 const NAV_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard },
@@ -199,7 +200,7 @@ function App() {
   else if (activePage === 'resources') content = <ResourcesPage focus={resourceFocus} bookmarks={bookmarks}
     toggleBookmark={toggleBookmark} />;
   else if (activePage === 'labs') content = <LabsPage selectedLabId={selectedLabId} setSelectedLabId={setSelectedLabId}
-    labProgress={labProgress} setLabProgress={setLabProgress} openModule={openModule} />;
+    labProgress={labProgress} setLabProgress={setLabProgress} openModule={openModule} showToast={setToast} />;
   else if (activePage === 'notes') content = <NotesPage notes={allNotes} selectedNoteId={selectedNoteId}
     setSelectedNoteId={setSelectedNoteId} personalNotes={personalNotes} setPersonalNotes={setPersonalNotes} showToast={setToast} />;
   else content = <MaintenancePage progress={progress} setProgress={setProgress} bookmarks={bookmarks}
@@ -211,12 +212,12 @@ function App() {
     <div className="app-shell">
       {mobileNav && <button className="nav-scrim" aria-label="关闭导航" onClick={() => setMobileNav(false)} />}
       <aside className={`sidebar ${mobileNav ? 'is-open' : ''}`}>
-        <button className="brand" onClick={() => navigate('dashboard')} aria-label="返回学习总览">
+        <button className="brand" onClick={() => navigate('dashboard')} aria-label="返回学习首页">
           <span className="brand-mark"><span>IA</span><i /></span>
-          <span><strong>Infra Atlas</strong><small>AI 基建学习站</small></span>
+          <span><strong>Infra Atlas</strong><small>AI 基础设施学习指南</small></span>
         </button>
-        <div className="sidebar-label">我的学习空间</div>
-        <nav className="main-nav">
+        <div className="sidebar-label">学习目录</div>
+        <nav className="main-nav" aria-label="主导航">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return <button key={item.id} className={activePage === item.id ? 'active' : ''} onClick={() => navigate(item.id)}>
@@ -228,32 +229,32 @@ function App() {
         </nav>
         <div className="sidebar-spacer" />
         <div className="sidebar-progress">
-          <div className="sidebar-progress-head"><span>知识探索进度</span><strong>{overallProgress}%</strong></div>
+          <div className="sidebar-progress-head"><span>我的学习进度</span><strong>{overallProgress}%</strong></div>
           <div className="linear-track"><i style={{ width: `${overallProgress}%` }} /></div>
-          <p>{completedTopics} / {ALL_TOPICS.length} 个主题已标记</p>
+          <p>已完成 {completedTopics} / {ALL_TOPICS.length} 个主题</p>
           <button onClick={() => navigate('curriculum')}>继续学习 <ArrowRight size={14} /></button>
         </div>
-        <div className="sidebar-foot"><span className="status-dot" />本地优先 · 数据仅存于此浏览器</div>
+        <div className="sidebar-foot"><span className="status-dot" />学习记录仅保存在当前浏览器</div>
       </aside>
 
       <div className="main-shell">
         <header className="topbar">
           <div className="topbar-left">
             <button className="icon-btn mobile-menu" onClick={() => setMobileNav(true)} aria-label="打开导航"><Menu size={21} /></button>
-            <span className="breadcrumb">ATLAS <ChevronRight size={13} /> {PAGE_META[activePage].eyebrow}</span>
+            <span className="breadcrumb">Infra Atlas <ChevronRight size={13} /> {PAGE_META[activePage].label}</span>
           </div>
           <div className="topbar-actions">
-            <button className="search-trigger" onClick={() => setSearchOpen(true)}><Search size={17} /><span>搜索知识、资源、实验…</span><kbd><Command size={11} /> K</kbd></button>
+            <button className="search-trigger" onClick={() => setSearchOpen(true)}><Search size={17} /><span>搜索课程、资料和实验</span><kbd><Command size={11} /> K</kbd></button>
             <button className="icon-btn" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} aria-label="切换明暗主题">
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
-            <button className="avatar" onClick={() => navigate('notes')} title="进入我的笔记">S</button>
+            <button className="avatar" onClick={() => navigate('notes')} title="进入我的笔记" aria-label="进入我的笔记"><NotebookPen size={17} /></button>
           </div>
         </header>
         <main className={`page page-${activePage}`}>{content}</main>
         <footer className="site-footer">
-          <span>INFRA ATLAS · BUILT TO KEEP LEARNING</span>
-          <span>内容驱动 / 本地优先 / 持续更新</span>
+          <span>Infra Atlas · AI 基础设施学习指南</span>
+          <span>学习记录保存在当前浏览器，可在设置中导出</span>
         </footer>
       </div>
 
@@ -272,68 +273,68 @@ function App() {
 function Dashboard({ navigate, openModule, openResources, openLab, openNote, progress, overallProgress, completedTopics }) {
   const nextTopics = ALL_TOPICS.filter((topic) => !progress[topic.id]).slice(0, 3);
   const featured = resources.filter((item) => item.featured).slice(0, 4);
-  const firstLab = labs.find((lab) => lab.id === 'lab-serving');
+  const firstLab = labs[0];
   return (
     <>
       <section className="hero">
         <div className="hero-copy">
-          <div className="hero-kicker"><span><Sparkles size={14} /> PERSONAL KNOWLEDGE SYSTEM</span><em>持续生长</em></div>
-          <h1>把 AI 基建，<br />学成一张<span>能走的地图。</span></h1>
-          <p>从一颗 GPU 到生产级大模型系统。用清晰路径建立体系，用真实实验验证理解，再把你的经验写回这里。</p>
+          <div className="hero-kicker"><span><BookOpen size={15} /> 面向开发者的入门与实践教程</span><em>免费学习</em></div>
+          <h1>系统学习 AI 基础设施，<br /><span>从原理到动手实践。</span></h1>
+          <p>从 Linux、GPU 和 PyTorch 基础开始，逐步学习算子优化、分布式训练、推理服务与生产部署。每个实验都提供命令、验证方法和结果模板。</p>
           <div className="hero-actions">
-            <button className="btn btn-primary" onClick={() => navigate('curriculum')}>从学习路径开始 <ArrowRight size={17} /></button>
-            <button className="btn btn-ghost" onClick={() => navigate('map')}>浏览全栈地图 <Map size={17} /></button>
+            <button className="btn btn-primary" onClick={() => navigate('curriculum')}>查看学习路径 <ArrowRight size={17} /></button>
+            <button className="btn btn-ghost" onClick={() => openLab(firstLab.id)}>从第一个实验开始 <FlaskConical size={17} /></button>
           </div>
-          <div className="hero-footnote"><span>NO. 001</span><i />为长期学习而设计，不为一次性收藏。</div>
+          <div className="hero-footnote"><ListChecks size={16} /><span>建议先具备 Python、Linux 命令行和基础深度学习知识</span></div>
         </div>
-        <div className="hero-system" aria-label="AI Infra 技术栈示意图">
-          <div className="system-top"><span>THE AI INFRA STACK</span><CircleGauge size={18} /></div>
-          <div className="system-diagram">
-            {stackLayers.map((layer, index) => <div className="system-layer" key={layer.id} style={{ '--i': index }}>
-              <span>0{stackLayers.length - index}</span><strong>{layer.en}</strong><i /><em>{layer.name}</em>
-            </div>)}
+        <div className="hero-system learning-route" aria-label="推荐学习顺序">
+          <div className="system-top"><span>推荐学习顺序</span><Map size={18} /></div>
+          <div className="route-list">
+            {learningPaths.slice(0, 4).map((path) => <button className="route-step" key={path.id} onClick={() => openModule(path.moduleIds[0])}>
+              <span>{path.phase}</span><div><strong>{path.title}</strong><small>{path.goal}</small></div><ChevronRight size={17} />
+            </button>)}
           </div>
-          <div className="system-bottom"><span><i /> CONTENT-DRIVEN</span><span>LOCAL-FIRST</span></div>
+          <button className="route-more" onClick={() => navigate('curriculum')}>查看全部六个阶段 <ArrowRight size={15} /></button>
         </div>
       </section>
 
-      <section className="stats-strip">
-        <div><strong>{modules.length}</strong><span>知识领域<small>DOMAINS</small></span></div>
-        <div><strong>{ALL_TOPICS.length}</strong><span>核心主题<small>CORE TOPICS</small></span></div>
-        <div><strong>{resources.length}</strong><span>精选资料<small>RESOURCES</small></span></div>
-        <div><strong>{labs.length}</strong><span>实战实验<small>LABS</small></span></div>
-        <div className="stats-progress"><ProgressRing value={overallProgress} size={58} stroke={5} /><span>我的探索进度<small>{completedTopics} 个主题已标记</small></span></div>
+      <section className="stats-strip" aria-label="网站内容统计">
+        <div><strong>{modules.length}</strong><span>知识领域<small>按技术方向分类</small></span></div>
+        <div><strong>{ALL_TOPICS.length}</strong><span>核心主题<small>带关键问题与导读</small></span></div>
+        <div><strong>{resources.length}</strong><span>精选资料<small>优先官方文档与论文</small></span></div>
+        <div><strong>{labs.length}</strong><span>动手实验<small>命令与结果验证齐全</small></span></div>
+        <div className="stats-progress"><ProgressRing value={overallProgress} size={58} stroke={5} /><span>我的学习进度<small>已完成 {completedTopics} 个主题</small></span></div>
       </section>
 
       <div className="dashboard-grid">
         <section className="panel continue-panel">
-          <SectionHead eyebrow="UP NEXT" title="接着往前，走一小步" action={<button className="text-link" onClick={() => navigate('curriculum')}>完整路径 <ArrowUpRight size={15} /></button>} />
+          <SectionHead eyebrow="继续学习" title="接下来学什么" action={<button className="text-link" onClick={() => navigate('curriculum')}>完整学习路径 <ArrowUpRight size={15} /></button>} />
           <div className="next-list">
             {nextTopics.length ? nextTopics.map((topic, index) => <button key={topic.id} onClick={() => openModule(topic.module.id)}>
               <span className="next-index">0{index + 1}</span>
-              <span><small>{topic.module.title} · {topic.module.en}</small><strong>{topic.title}</strong><em>{topic.summary}</em></span>
+              <span><small>{topic.module.title}</small><strong>{topic.title}</strong><em>{topic.summary}</em></span>
               <ArrowUpRight size={18} />
-            </button>) : <EmptyState icon={CheckCircle2} title="全部主题已标记" description="可以回到笔记，整理自己的知识体系。" />}
+            </button>) : <EmptyState icon={CheckCircle2} title="全部主题已完成" description="可以通过实验和笔记复习，或继续阅读进阶资料。" />}
           </div>
         </section>
         <section className="panel lab-callout">
-          <div className="lab-callout-top"><span>RECOMMENDED LAB</span><FlaskConical size={22} /></div>
+          <div className="lab-callout-top"><span>推荐从这个实验开始</span><FlaskConical size={22} /></div>
           <div className="lab-number">{firstLab.number}</div>
           <h3>{firstLab.title}</h3><p>{firstLab.subtitle}</p>
           <div className="lab-meta"><span><Clock3 size={14} />{firstLab.duration}</span><span>{firstLab.level}</span></div>
-          <button onClick={() => openLab(firstLab.id)}>打开实验手册 <ArrowRight size={16} /></button>
+          <button onClick={() => openLab(firstLab.id)}>查看完整实验步骤 <ArrowRight size={16} /></button>
         </section>
       </div>
 
       <section className="home-section">
-        <SectionHead eyebrow="THE BIG PICTURE" title="十四个领域，一幅完整地图" action={<button className="text-link" onClick={() => navigate('map')}>按技术栈查看 <ArrowUpRight size={15} /></button>} />
+        <SectionHead eyebrow="课程目录" title="按领域学习" action={<button className="text-link" onClick={() => navigate('map')}>查看知识地图 <ArrowUpRight size={15} /></button>} />
         <div className="module-grid">
           {modules.map((module) => {
             const done = module.topics.filter((topic) => progress[topic.id]).length;
             return <button className={`module-card tone-${((module.order - 1) % 4) + 1}`} key={module.id} onClick={() => openModule(module.id)}>
               <div className="module-card-top"><span className="module-icon"><ModuleIcon module={module} /></span><em>{String(module.order).padStart(2, '0')}</em></div>
-              <small>{module.en}</small><h3>{module.title}</h3><p>{module.brief}</p>
-              <div className="module-card-foot"><span>{module.topics.length} 个主题 · {module.hours}h</span><span className="mini-progress"><i style={{ width: `${done / module.topics.length * 100}%` }} /></span></div>
+              <small>{module.layer} · {module.level}</small><h3>{module.title}</h3><p>{module.brief}</p>
+              <div className="module-card-foot"><span>{module.topics.length} 个主题 · 建议 {module.hours} 小时</span><span className="mini-progress"><i style={{ width: `${done / module.topics.length * 100}%` }} /></span></div>
             </button>;
           })}
         </div>
@@ -341,7 +342,7 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
 
       <div className="home-bottom-grid">
         <section className="home-section">
-          <SectionHead eyebrow="EDITOR'S SELECTION" title="值得先读的资料" action={<button className="text-link" onClick={() => openResources()}>全部 {resources.length} 条 <ArrowUpRight size={15} /></button>} />
+          <SectionHead eyebrow="精选阅读" title="值得先读的资料" action={<button className="text-link" onClick={() => openResources()}>查看全部 {resources.length} 条 <ArrowUpRight size={15} /></button>} />
           <div className="featured-resources">
             {featured.map((item) => <a key={item.id} href={item.url} target="_blank" rel="noreferrer">
               <span className="resource-type">{item.type}</span><div><h3>{item.title}</h3><p>{item.description}</p><small>{modules.find((module) => module.id === item.category)?.title} · {item.level}</small></div><ArrowUpRight size={18} />
@@ -349,7 +350,7 @@ function Dashboard({ navigate, openModule, openResources, openLab, openNote, pro
           </div>
         </section>
         <section className="home-section recent-notes">
-          <SectionHead eyebrow="FROM THE NOTEBOOK" title="方法与模板" action={<button className="text-link" onClick={() => navigate('notes')}>全部笔记 <ArrowUpRight size={15} /></button>} />
+          <SectionHead eyebrow="学习工具" title="实验记录与方法模板" action={<button className="text-link" onClick={() => navigate('notes')}>全部笔记 <ArrowUpRight size={15} /></button>} />
           {builtInNotes.slice(1, 4).map((note) => <button key={note.id} onClick={() => openNote(note.id)}>
             <FileText size={19} /><span><strong>{note.title}</strong><small>{note.summary}</small></span><ChevronRight size={17} />
           </button>)}
@@ -364,8 +365,8 @@ function CurriculumPage({ selectedModuleId, setSelectedModuleId, progress, setPr
   const selectedDone = selected.topics.filter((topic) => progress[topic.id]).length;
   return (
     <>
-      <PageTitle eyebrow="LEARNING PATH" title="不是收藏清单，是你的学习路径"
-        description="六个阶段建立完整视野；每个主题都用一个关键问题驱动学习。标记只保存在当前浏览器。" />
+      <PageTitle eyebrow="循序渐进" title="学习路径"
+        description="按六个阶段学习，每个阶段都有明确目标和对应实践。点击领域查看主题，完成学习后再做标记。" />
       <section className="path-rail">
         {learningPaths.map((path) => {
           const pathTopics = modules.filter((module) => path.moduleIds.includes(module.id)).flatMap((module) => module.topics);
@@ -429,8 +430,8 @@ function MapPage({ openModule, openResources }) {
   ];
   return (
     <>
-      <PageTitle eyebrow="KNOWLEDGE ATLAS" title="从应用到底层，看懂每一层"
-        description="点击技术栈切换层级，再进入具体领域。遇到问题时，也可以从下方的问题入口反向定位。" />
+      <PageTitle eyebrow="建立整体认识" title="知识地图"
+        description="查看应用、推理、训练、运行时和硬件之间的关系。也可以从遇到的问题出发，找到需要补学的知识。" />
       <div className="atlas-layout">
         <section className="atlas-stack">
           <div className="atlas-stack-head"><span>AI INFRASTRUCTURE / FULL STACK</span><Layers3 size={20} /></div>
@@ -490,8 +491,8 @@ function ResourcesPage({ focus, bookmarks, toggleBookmark }) {
   function reset() { setQuery(''); setCategory('all'); setType('全部类型'); setLevel('全部难度'); setBookmarkedOnly(false); }
   return (
     <>
-      <PageTitle eyebrow="CURATED LIBRARY" title="资料很多，只保留值得读的"
-        description={`首批 ${resources.length} 条资料，优先官方文档、经典论文、课程与可复现项目。链接指向各自原始来源。`}
+      <PageTitle eyebrow="学习资源" title="资源库"
+        description={`按领域、难度和资料类型查找 ${resources.length} 条精选内容。优先收录官方文档、经典论文、课程与可复现项目。`}
         actions={<button className={`btn ${bookmarkedOnly ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setBookmarkedOnly(!bookmarkedOnly)}><Bookmark size={16} />我的收藏 <span>{bookmarks.length}</span></button>} />
       <section className="library-controls">
         <label className="library-search"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索 vLLM、FSDP、NCCL、量化…" />{query && <button onClick={() => setQuery('')} aria-label="清空搜索"><X size={17} /></button>}</label>
@@ -514,45 +515,120 @@ function ResourcesPage({ focus, bookmarks, toggleBookmark }) {
         </article>;
       })}</div> : <EmptyState title="没有找到匹配资料" description="试试更短的关键词，或清除领域与难度筛选。" action={<button className="btn btn-primary" onClick={reset}>清除筛选</button>} />}
       {limit < filtered.length && <button className="load-more" onClick={() => setLimit((value) => value + 24)}>再显示 {Math.min(24, filtered.length - limit)} 条<ChevronDown size={17} /></button>}
-      <div className="library-note"><ShieldCheck size={17} /><p>资源版本与内容以原站点为准。本站不自动抓取正文；你可以在“更新与备份”中找到新增资源和链接体检流程。</p></div>
+      <div className="library-note"><ShieldCheck size={17} /><p>链接会在新标签页打开，资料版本与正文以原站点为准。收藏只保存在当前浏览器，可以在“设置与备份”中导出。</p></div>
     </>
   );
 }
 
-function LabsPage({ selectedLabId, setSelectedLabId, labProgress, setLabProgress, openModule }) {
+function CodeBlock({ code, title = '在终端执行', language = 'bash' }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(timer);
+  }, [copied]);
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+    setCopied(true);
+  }
+  return <div className="code-block">
+    <div className="code-block-head"><span><SquareTerminal size={14} />{title}<em>{language}</em></span><button onClick={copyCode} aria-label={copied ? '已复制' : `复制${title}`}>{copied ? <Check size={14} /> : <Copy size={14} />}{copied ? '已复制' : '复制'}</button></div>
+    <pre tabIndex="0"><code>{code}</code></pre>
+  </div>;
+}
+
+function labReportMarkdown(lab, guide) {
+  return `# ${lab.title}｜实验记录\n\n## 实验环境\n\n- 日期：\n- 机器 / GPU：\n- 操作系统与驱动：\n- 软件版本：\n- 实验参数：\n\n## 实验目标\n\n${lab.goal}\n\n## 操作记录\n\n${lab.steps.map((step, index) => `### ${index + 1}. ${step.title}\n\n- [ ] 已完成\n- 实际执行的命令或配置：\n- 观察到的结果：\n- 遇到的问题：`).join('\n\n')}\n\n## 结果数据\n\n| 指标 | 结果 | 备注 |\n| --- | --- | --- |\n${lab.metrics.map((metric) => `| ${metric} |  |  |`).join('\n')}\n\n## 结论\n\n### 数据支持了什么结论？\n\n### 还有哪些现象无法解释？\n\n### 下一步要验证什么？\n\n## 安全与清理\n\n${guide.cleanup || '确认临时进程已停止，按需删除临时文件。'}\n`;
+}
+
+function LabsPage({ selectedLabId, setSelectedLabId, labProgress, setLabProgress, openModule, showToast }) {
   const lab = labs.find((item) => item.id === selectedLabId) || labs[0];
-  const completed = labProgress[lab.id] || [];
+  const guide = labGuides[lab.id] || { requirements: [], steps: [], troubleshooting: [] };
+  const completed = (labProgress[lab.id] || []).filter((index) => index < lab.steps.length);
   const percentage = Math.round(completed.length / lab.steps.length * 100);
+  const labIndex = labs.findIndex((item) => item.id === lab.id);
   function toggleStep(index) {
     setLabProgress((state) => {
       const current = state[lab.id] || [];
       return { ...state, [lab.id]: current.includes(index) ? current.filter((item) => item !== index) : [...current, index] };
     });
   }
+  function selectLab(id) {
+    setSelectedLabId(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function resetProgress() {
+    if (!window.confirm(`确定清空「${lab.title}」的步骤勾选吗？实验文件不会受影响。`)) return;
+    setLabProgress((state) => ({ ...state, [lab.id]: [] }));
+    showToast('已清空本实验的完成记录');
+  }
   return (
     <>
-      <PageTitle eyebrow="HANDS-ON LABS" title="把理解变成一次可复现的实验"
-        description="每个实验都有明确环境、步骤、指标与交付物。先写假设，再保存原始数据，最后记录不能解释的部分。" />
+      <PageTitle eyebrow="实验教程" title="动手实验"
+        description="选择与你的环境匹配的实验，按顺序复制命令、检查结果并保存数据。步骤勾选只用于记录进度，完成与否以实际结果为准。" />
       <div className="lab-workspace">
         <section className="lab-manual">
-          <div className="lab-manual-head"><div><span>LAB {lab.number} / {lab.level}</span><h2>{lab.title}</h2><p>{lab.subtitle}</p></div><ProgressRing value={percentage} size={82} /></div>
-          <div className="lab-info-row"><span><Clock3 size={16} />{lab.duration}</span><span><SquareTerminal size={16} />{lab.environment}</span><button onClick={() => openModule(lab.moduleId)}>关联领域 <ArrowUpRight size={15} /></button></div>
-          <div className="lab-goal"><span>实验目标</span><p>{lab.goal}</p></div>
-          <div className="lab-steps"><h3>实验步骤 <small>{completed.length} / {lab.steps.length} 已完成</small></h3>
-            {lab.steps.map((step, index) => <button key={step.title} className={completed.includes(index) ? 'done' : ''} onClick={() => toggleStep(index)}>
-              <span className="step-check">{completed.includes(index) ? <Check size={17} /> : index + 1}</span><span><strong>{step.title}</strong><p>{step.detail}</p></span>
-            </button>)}
-          </div>
-          <div className="lab-output"><div><BarChart3 size={20} /><h3>至少记录这些指标</h3></div><ul>{lab.metrics.map((metric) => <li key={metric}>{metric}</li>)}</ul></div>
-          <div className="deliverable"><FileText size={22} /><div><span>DEFINITION OF DONE</span><h3>本次交付物</h3><p>{lab.deliverable}</p></div></div>
-          <div className="lab-resources"><h3>实验前可参考</h3><div>{lab.resourceIds.map((id) => {
+          <div className="lab-manual-head"><div><span>实验 {lab.number} · {lab.level}</span><h2>{lab.title}</h2><p>{lab.subtitle}</p></div><ProgressRing value={percentage} size={82} /></div>
+          <div className="lab-info-row"><span><Clock3 size={16} />{lab.duration}</span><span><SquareTerminal size={16} />{lab.environment}</span><button onClick={() => openModule(lab.moduleId)}>先学相关知识 <ArrowUpRight size={15} /></button></div>
+          <div className="lab-goal"><span>完成这个实验，你会得到</span><p>{lab.goal}</p></div>
+
+          <section className="lab-prepare">
+            <div className="lab-section-title"><div><span>开始前</span><h3>检查环境与注意事项</h3></div><ListChecks size={21} /></div>
+            <ul>{guide.requirements?.map((item) => <li key={item}><Check size={15} /><span>{item}</span></li>)}</ul>
+            {guide.safety && <div className="lab-safety"><AlertTriangle size={18} /><p>{guide.safety}</p></div>}
+          </section>
+
+          <section className="lab-steps">
+            <div className="lab-section-title"><div><span>操作流程</span><h3>按顺序完成以下 {lab.steps.length} 步</h3></div><small>{completed.length} / {lab.steps.length} 已完成</small></div>
+            {lab.steps.map((step, index) => {
+              const detail = guide.steps?.[index] || {};
+              const done = completed.includes(index);
+              return <article key={step.title} className={`lab-step ${done ? 'done' : ''}`}>
+                <button className="lab-step-head" onClick={() => toggleStep(index)} aria-pressed={done}>
+                  <span className="step-check">{done ? <Check size={17} /> : index + 1}</span>
+                  <span className="step-heading"><small>步骤 {index + 1}</small><strong>{step.title}</strong><span className="step-description">{step.detail}</span></span>
+                  <span className="step-status">{done ? '已完成' : '标记完成'}</span>
+                </button>
+                <div className="lab-step-body">
+                  {detail.blocks?.map((block) => <CodeBlock key={`${block.title}-${block.code.slice(0, 24)}`} {...block} />)}
+                  {detail.expected && <div className="step-expected"><CheckCircle2 size={18} /><div><strong>如何确认这一步做对了</strong><p>{detail.expected}</p></div></div>}
+                  {detail.note && <p className="step-note">{detail.note}</p>}
+                </div>
+              </article>;
+            })}
+          </section>
+
+          <div className="lab-output"><div><BarChart3 size={20} /><h3>需要记录的结果</h3></div><ul>{lab.metrics.map((metric) => <li key={metric}>{metric}</li>)}</ul></div>
+          <div className="deliverable"><FileText size={22} /><div><span>完成标准</span><h3>整理实验结果</h3><p>{lab.deliverable}</p></div><button onClick={() => downloadFile(`${lab.id}-记录模板.md`, labReportMarkdown(lab, guide), 'text/markdown;charset=utf-8')}><Download size={16} />下载记录模板</button></div>
+
+          {guide.troubleshooting?.length > 0 && <section className="lab-troubleshooting"><div className="lab-section-title"><div><span>遇到问题</span><h3>常见错误与处理方法</h3></div><CircleHelp size={21} /></div>
+            {guide.troubleshooting.map((item) => <details key={item.problem}><summary>{item.problem}<ChevronDown size={16} /></summary><p>{item.solution}</p></details>)}
+          </section>}
+          {guide.cleanup && <div className="lab-cleanup"><strong>实验结束后</strong><p>{guide.cleanup}</p></div>}
+          <div className="lab-resources"><h3>相关文档与延伸阅读</h3><div>{lab.resourceIds.map((id) => {
             const resource = resources.find((item) => item.id === id);
             return resource ? <a href={resource.url} target="_blank" rel="noreferrer" key={id}>{resource.title}<ArrowUpRight size={14} /></a> : null;
           })}</div></div>
+          <div className="lab-pagination">
+            <button disabled={labIndex === 0} onClick={() => selectLab(labs[labIndex - 1]?.id)}><ChevronLeft size={16} />上一个实验</button>
+            <button className="text-button" onClick={resetProgress}><RotateCcw size={14} />清空本实验勾选</button>
+            <button disabled={labIndex === labs.length - 1} onClick={() => selectLab(labs[labIndex + 1]?.id)}>下一个实验<ChevronRight size={16} /></button>
+          </div>
         </section>
-        <aside className="lab-catalog"><div className="lab-catalog-title">实验目录 <span>{labs.length}</span></div>{labs.map((item) => {
-          const done = (labProgress[item.id] || []).length;
-          return <button key={item.id} className={item.id === lab.id ? 'active' : ''} onClick={() => setSelectedLabId(item.id)}><span>{item.number}</span><div><strong>{item.title}</strong><small>{item.level} · {item.duration}</small><i><em style={{ width: `${done / item.steps.length * 100}%` }} /></i></div><ChevronRight size={16} /></button>;
+        <aside className="lab-catalog"><div className="lab-catalog-title">实验目录 <span>{labs.length}</span></div><p className="lab-catalog-intro">按自己的硬件条件选择，不必一次全部完成。</p>{labs.map((item) => {
+          const done = (labProgress[item.id] || []).filter((index) => index < item.steps.length).length;
+          return <button key={item.id} className={item.id === lab.id ? 'active' : ''} onClick={() => selectLab(item.id)}><span>{item.number}</span><div><strong>{item.title}</strong><small>{item.level} · {item.duration}</small><i><em style={{ width: `${done / item.steps.length * 100}%` }} /></i></div><ChevronRight size={16} /></button>;
         })}</aside>
       </div>
     </>
@@ -594,8 +670,8 @@ function NotesPage({ notes, selectedNoteId, setSelectedNoteId, personalNotes, se
   const editorOpen = editing !== null || draft.title || draft.body;
   return (
     <>
-      <PageTitle eyebrow="YOUR KNOWLEDGE" title="把经验写下来，知识才真正属于你"
-        description="站内指南与个人笔记统一管理。你的新增内容只保存在当前浏览器，可导出 Markdown 或整站备份。"
+      <PageTitle eyebrow="学习记录" title="我的笔记"
+        description="记录实验命令、结果和疑问，或从内置模板开始整理。笔记可导出为 Markdown，新增内容只保存在当前浏览器。"
         actions={<button className="btn btn-primary" onClick={() => startNew()}><Plus size={17} />新建笔记</button>} />
       <div className="notes-workspace">
         <aside className="notes-list">
@@ -625,6 +701,7 @@ function NotesPage({ notes, selectedNoteId, setSelectedNoteId, personalNotes, se
 
 function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, personalNotes, setPersonalNotes, labProgress, setLabProgress, theme, setTheme, showToast, completedTopics }) {
   const fileInput = useRef(null);
+  const completedLabSteps = Object.values(labProgress).reduce((total, steps) => total + steps.length, 0);
   function exportBackup() {
     const payload = { product: 'Infra Atlas', version: 1, exportedAt: new Date().toISOString(), data: { progress, bookmarks, personalNotes, labProgress, theme } };
     downloadFile(`infra-atlas-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(payload, null, 2), 'application/json');
@@ -644,46 +721,27 @@ function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, perso
     } catch { showToast('无法读取：请选择本站导出的备份文件'); }
     finally { event.target.value = ''; }
   }
-  async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); showToast('命令已复制'); } catch { showToast('复制失败，请手动选择命令'); }
-  }
-  const commands = [
-    { title: '新增一篇 Markdown 笔记', code: 'npm run new:note -- "我的 AI Infra 学习笔记"' },
-    { title: '校验内容并构建网站', code: 'npm run check && npm run build' },
-    { title: '检查资源链接是否仍可访问', code: 'npm run check:links' },
-  ];
   return (
     <>
-      <PageTitle eyebrow="CONTENT STUDIO" title="这不是成品站，而是一套可持续生长的系统"
-        description="内容、学习数据与界面分离。以后新增工作经验时，可以直接写 Markdown；资源和课程则由结构化文件统一维护。" />
-      <section className="content-stats"><div><Database size={21} /><strong>{resources.length}</strong><span>结构化资源</span></div><div><BookOpen size={21} /><strong>{ALL_TOPICS.length}</strong><span>课程主题</span></div><div><NotebookPen size={21} /><strong>{personalNotes.length}</strong><span>我的笔记</span></div><div><CheckCircle2 size={21} /><strong>{completedTopics}</strong><span>已标记主题</span></div></section>
+      <PageTitle eyebrow="个人设置" title="设置与备份"
+        description="调整显示方式，管理学习记录。换浏览器或清理浏览器数据前，建议先导出一份备份。" />
+      <section className="content-stats"><div><CheckCircle2 size={21} /><strong>{completedTopics}</strong><span>已完成主题</span></div><div><FlaskConical size={21} /><strong>{completedLabSteps}</strong><span>已勾选实验步骤</span></div><div><Bookmark size={21} /><strong>{bookmarks.length}</strong><span>收藏资料</span></div><div><NotebookPen size={21} /><strong>{personalNotes.length}</strong><span>我的笔记</span></div></section>
       <div className="maintenance-grid">
-        <section className="panel content-guide"><SectionHead eyebrow="UPDATE WORKFLOW" title="三种方式，持续添砖加瓦" />
-          <div className="update-methods"><article><span>01</span><div><h3>写工作经验与学习笔记</h3><p>在上方直接新建笔记，或把 Markdown 文件放进 <code>src/content/notes/</code>。重新构建后会自动进入网站。</p></div></article>
-            <article><span>02</span><div><h3>补充资源与知识体系</h3><p>资源维护在 <code>src/content/resources.json</code>；领域与学习路径维护在 <code>src/content/curriculum.js</code>。构建时会检查必填字段和重复 ID。</p></div></article>
-            <article><span>03</span><div><h3>把浏览器数据带走</h3><p>进度、收藏、实验勾选和私人笔记保存在 localStorage。换浏览器或清理数据前，请先导出完整备份。</p></div></article></div>
-          <div className="command-list">{commands.map((command) => <div key={command.code}><span>{command.title}</span><code>{command.code}</code><button onClick={() => copyText(command.code)} aria-label="复制命令"><Copy size={16} /></button></div>)}</div>
+        <section className="panel content-guide"><SectionHead eyebrow="使用帮助" title="如何记录学习过程" />
+          <div className="update-methods"><article><span>01</span><div><h3>标记已经掌握的主题</h3><p>在“学习路径”中打开主题，阅读说明和相关资料后，再将它标记为已完成。首页会显示下一次可以继续学习的内容。</p></div></article>
+            <article><span>02</span><div><h3>边做实验边保存结果</h3><p>在“动手实验”中复制命令并逐步核对结果。每个实验都可以下载 Markdown 记录模板，用来保存环境、参数、数据和问题。</p></div></article>
+            <article><span>03</span><div><h3>把笔记和进度一起带走</h3><p>笔记、收藏、主题进度和实验勾选都保存在当前浏览器。换设备时，先在这里导出备份，再在新设备上恢复。</p></div></article></div>
         </section>
-        <aside className="panel backup-panel"><SectionHead eyebrow="LOCAL DATA" title="备份与恢复" /><div className="backup-icon"><HardDrive size={34} /></div><p>备份包含学习进度、资源收藏、实验勾选、个人笔记和主题设置，不包含网站源文件。</p>
-          <button className="btn btn-primary" onClick={exportBackup}><Download size={17} />导出完整学习数据</button><button className="btn btn-ghost" onClick={() => fileInput.current?.click()}><Upload size={17} />从备份恢复</button>
-          <input ref={fileInput} type="file" accept="application/json,.json" onChange={importBackup} hidden /><small>JSON 格式 · 仅在本机处理，不上传任何服务器</small>
+        <aside className="panel backup-panel"><SectionHead eyebrow="学习数据" title="备份与恢复" /><div className="backup-icon"><HardDrive size={34} /></div><p>备份包含主题进度、资源收藏、实验勾选、个人笔记和显示设置。恢复备份会替换当前浏览器里的对应记录。</p>
+          <button className="btn btn-primary" onClick={exportBackup}><Download size={17} />导出学习数据</button><button className="btn btn-ghost" onClick={() => fileInput.current?.click()}><Upload size={17} />从备份恢复</button>
+          <input ref={fileInput} type="file" accept="application/json,.json" onChange={importBackup} hidden /><small>JSON 文件只在你的设备上处理，不会上传</small>
         </aside>
       </div>
-      <section className="project-structure"><div><div className="eyebrow">PROJECT ANATOMY</div><h2>内容结构一眼可见</h2><p>保留源文件夹，就能继续迭代。日常本地预览使用 <code>npm run dev</code>；需要发布静态文件时使用 <code>npm run build</code>。</p></div>
-        <pre>{`AI-Infra-Atlas/
-├── src/content/
-│   ├── curriculum.js     # 领域、主题、学习路径
-│   ├── resources.json    # 资源库
-│   ├── labs.js           # 实验手册
-│   └── notes/            # Markdown 笔记（自动加载）
-├── scripts/
-│   ├── new-note.mjs      # 新建笔记模板
-│   ├── validate-content.mjs
-│   └── check-links.mjs   # 资源链接体检
-└── package.json          # 本地预览与构建命令`}</pre>
-      </section>
-      <section className="maintenance-bottom"><div><SectionHead eyebrow="CHANGELOG" title="内容更新记录" /><article className="changelog-item"><span>v1.0</span><div><time>2026-10-26</time><h3>首个完整学习版本</h3><p>建立 {modules.length} 个领域、{ALL_TOPICS.length} 个主题、{resources.length} 条资源、{labs.length} 个实验与 {builtInNotes.length} 篇指南／模板；上线本地进度、收藏、笔记与备份。</p></div></article></div>
-        <div className="update-boundary"><ShieldCheck size={23} /><h3>关于“持续更新”</h3><p>网站本身不会在后台自动抓取或改写内容。你添加文件、保存笔记并重新构建后，内容就会更新；外部资料的正文和版本由原站点维护。</p><p>建议每季度运行一次链接体检，并给新资源写清楚推荐理由。</p></div></section>
+      <div className="settings-bottom">
+        <section className="settings-preferences"><div><Moon size={22} /><span><h3>显示模式</h3><p>选择阅读更舒服的配色，设置会保存在当前浏览器。</p></span></div><div className="theme-options" role="group" aria-label="显示模式"><button className={theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')}><Sun size={16} />浅色</button><button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')}><Moon size={16} />深色</button></div></section>
+        <section className="settings-shortcuts"><Command size={22} /><div><h3>快速找到内容</h3><p>按 <kbd>⌘</kbd> <kbd>K</kbd>（Windows 按 <kbd>Ctrl</kbd> <kbd>K</kbd>）搜索课程、资料、实验和笔记；按 <kbd>Esc</kbd> 关闭搜索。</p></div></section>
+      </div>
+      <div className="data-notice"><ShieldCheck size={18} /><p>学习记录不会自动同步到其他浏览器或设备。如果你使用浏览器的无痕模式，关闭窗口后记录可能无法保留。</p></div>
     </>
   );
 }

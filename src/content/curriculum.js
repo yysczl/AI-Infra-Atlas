@@ -26,7 +26,7 @@ export const modules = [
   {
     id: 'kernels', order: 3, title: '算子与 AI 编译器', en: 'KERNELS & COMPILERS', layer: '运行时与编译', level: '进阶', hours: 36,
     brief: '从“会调用”走向“知道算子为什么快”。',
-    description: '覆盖 CUDA/Triton 算子编写、图捕获、算子融合、自动调优和 ML 编译栈，形成从 profile 到优化的闭环。',
+    description: '覆盖 CUDA/Triton 算子编写、图捕获、算子融合、自动调优和 ML 编译栈，学会从 profile 找问题，并用基准测试验证优化。',
     outcomes: ['写出并基准测试一个简单 GPU Kernel', '解释融合、 tiling、vectorization 与布局优化', '定位图断裂、重编译和无效优化的根因'],
     topics: [
       { id: 'kernel-cuda', title: 'CUDA Kernel 与内存合并', summary: '学习内核启动、共享内存、同步与全局内存访问，写出可测量的 CUDA 算子。', question: '怎样通过访问模式与带宽计算判断 Kernel 是否接近上限？' },
@@ -145,14 +145,14 @@ export const modules = [
   },
   {
     id: 'mlops', order: 13, title: 'MLOps 与 LLMOps', en: 'MLOPS & LLMOPS', layer: '应用基础设施', level: '入门', hours: 24,
-    brief: '让实验、模型、评测和发布形成可重复闭环。',
+    brief: '让实验可复现，让模型评测与发布有据可查。',
     description: '覆盖实验追踪、模型注册、数据与特征管线、离线/在线评测、反馈数据和持续交付。',
     outcomes: ['设计可复现的实验元数据与对比视图', '建立模型从候选到发布的门禁', '将离线指标、线上质量与人工反馈分开衡量'],
     topics: [
       { id: 'mlops-exp', title: '实验追踪与模型注册', summary: '记录代码、配置、数据、环境和 artifact，管理模型生命周期。', question: '一个线上模型如何追溯到训练它的全部输入？' },
       { id: 'mlops-pipeline', title: '工作流、特征与数据质量', summary: '构建可调度、可重试、幂等的训练与数据工作流。', question: '任务重跑时，哪些缓存可以复用，哪些必须失效？' },
       { id: 'mlops-eval', title: 'LLM 评测与回归测试', summary: '组织数据集、判分器、人工评审与统计波动，防止单一分数误导。', question: '模型更新后，如何证明质量提升不是评测噪声？' },
-      { id: 'mlops-feedback', title: '线上反馈与持续迭代', summary: '收集合规反馈、漂移信号和失败样本，形成可审计的数据闭环。', question: '线上样本进入训练集前需要经过哪些清洗和授权步骤？' },
+      { id: 'mlops-feedback', title: '线上反馈与持续迭代', summary: '收集合规反馈、漂移信号和失败样本，保留可审计的数据处理记录。', question: '线上样本进入训练集前需要经过哪些清洗和授权步骤？' },
     ],
   },
   {
@@ -170,12 +170,12 @@ export const modules = [
 ];
 
 export const learningPaths = [
-  { id: 'p1', phase: '01', title: '建立系统直觉', duration: '第 1–3 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 网络性能基线报告。' },
-  { id: 'p2', phase: '02', title: '吃透单卡执行', duration: '第 4–7 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，建立 profile → 假设 → 实验的闭环。', project: '优化一个融合算子，并提交正确性与性能对照。' },
+  { id: 'p1', phase: '01', title: '建立系统直觉', duration: '第 1–3 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 磁盘性能基线报告。' },
+  { id: 'p2', phase: '02', title: '吃透单卡执行', duration: '第 4–7 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，能用 profile 提出假设，再用对照实验验证。', project: '优化一个融合算子，并提交正确性与性能对照。' },
   { id: 'p3', phase: '03', title: '跨越多机训练', duration: '第 8–12 周', moduleIds: ['distributed', 'network', 'data'], goal: '理解并行策略、通信和存储如何共同决定扩展效率。', project: '设计并验证一套多机训练、Checkpoint 与故障恢复方案。' },
   { id: 'p4', phase: '04', title: '做好在线推理', duration: '第 13–17 周', moduleIds: ['inference', 'serving'], goal: '能针对流量与 SLO 调整引擎、批处理、缓存、量化和容量。', project: '完成一次真实流量分布的推理压测与容量规划。' },
   { id: 'p5', phase: '05', title: '走向生产平台', duration: '第 18–22 周', moduleIds: ['platform', 'observability'], goal: '让 GPU 工作负载可调度、可观测、可回滚、可演练。', project: '部署带指标、告警和故障演练的 GPU 服务。' },
-  { id: 'p6', phase: '06', title: '形成自己的技术栈', duration: '长期迭代', moduleIds: ['rag', 'mlops', 'governance'], goal: '打通应用基础设施、质量闭环与成本安全，并沉淀个人方法论。', project: '发布一篇完整架构复盘：约束、方案、数据、失败与下一步。' },
+  { id: 'p6', phase: '06', title: '完成一个应用基础设施项目', duration: '长期迭代', moduleIds: ['rag', 'mlops', 'governance'], goal: '为一个 RAG 应用补上检索评测、工具权限测试、发布记录和成本估算。', project: '发布一篇完整架构复盘：约束、方案、数据、失败与下一步。' },
 ];
 
 export const stackLayers = [
