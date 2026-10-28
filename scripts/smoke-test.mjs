@@ -1,9 +1,10 @@
 import { chromium } from 'playwright-core';
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { once } from 'node:events';
+import { stageAssessments } from '../src/content/stage-assessments.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const artifacts = join(root, 'artifacts');
@@ -104,6 +105,59 @@ try {
   await page.locator('.topic-list article.is-done').first().waitFor();
   console.log('✓ 学习进度刷新后保留');
 
+  assert(await page.locator('.path-assessment-open').count() === 7, '七个学习阶段缺少综合项目或结业测验入口');
+  await page.locator('.path-assessment-open').first().click();
+  await page.locator('.stage-assessment').waitFor();
+  assert(await page.locator('.project-step').count() === 4, '阶段综合项目不是四步');
+  assert(await page.locator('.project-rubric article').count() === 4, '阶段项目评分量规不完整');
+  assert((await page.locator('.project-rubric footer').innerText()).includes('100'), '阶段项目量规总分不是 100');
+  const [projectDownload] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: '下载项目记录模板' }).click()]);
+  assert(projectDownload.suggestedFilename().endsWith('.md'), '综合项目记录模板未正确下载');
+  await page.screenshot({ path: join(artifacts, 'stage-project-desktop.png'), fullPage: false, animations: 'disabled' });
+  await page.locator('#p0-quiz-tab').click();
+  const submitQuiz = page.getByRole('button', { name: '提交并查看成绩' });
+  assert(await submitQuiz.isDisabled(), '题目未答完时不应允许提交');
+  for (const [index, question] of stageAssessments.p0.quiz.entries()) {
+    const choice = index === 0 ? (question.answer + 1) % 4 : question.answer;
+    await page.locator(`input[name="${question.id}"][value="${choice}"]`).check();
+  }
+  assert(await submitQuiz.isEnabled(), '全部作答后仍无法提交');
+  await submitQuiz.click();
+  await page.locator('.quiz-result.is-passed').waitFor();
+  assert((await page.locator('.quiz-result').innerText()).includes('80'), '四题正确应恰好得到 80 分');
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('infra-atlas-assessments-v1') || '{}').p0?.attempts === 1);
+  const firstRecord = await page.evaluate(() => JSON.parse(localStorage.getItem('infra-atlas-assessments-v1')).p0);
+  assert(firstRecord.bestScore === 80 && firstRecord.lastScore === 80 && firstRecord.passed === true, '80 分通过成绩未正确保存');
+  assert(await page.locator('.quiz-explanation.is-wrong').count() === 1, '错题解析数量不正确');
+  await page.screenshot({ path: join(artifacts, 'stage-quiz-desktop.png'), fullPage: false, animations: 'disabled' });
+  await page.locator('.quiz-explanation.is-wrong button').click();
+  await page.locator('.topic-drawer .lesson-markdown').waitFor();
+  assert(await page.locator('.stage-assessment').count() === 0, '错题复习时阶段考核面板未关闭');
+  assert((await page.locator('.topic-drawer h2').innerText()).includes('Python'), '错题没有打开对应知识点的微课');
+  await page.getByRole('button', { name: '关闭主题详情' }).click();
+
+  await page.locator('.path-assessment-open').first().click();
+  await page.locator('#p0-quiz-tab').click();
+  assert((await page.locator('.quiz-history').innerText()).includes('80'), '历史最高分未显示');
+  for (const question of stageAssessments.p0.quiz) {
+    await page.locator(`input[name="${question.id}"][value="${(question.answer + 1) % 4}"]`).check();
+  }
+  await page.getByRole('button', { name: '提交并查看成绩' }).click();
+  await page.locator('.quiz-result.is-retry').waitFor();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('infra-atlas-assessments-v1') || '{}').p0?.attempts === 2);
+  const secondRecord = await page.evaluate(() => JSON.parse(localStorage.getItem('infra-atlas-assessments-v1')).p0);
+  assert(secondRecord.bestScore === 80 && secondRecord.lastScore === 0 && secondRecord.passed === true, '低分重考覆盖了最高分或通过状态');
+  assert(secondRecord.completedAt === firstRecord.completedAt, '首次通过时间被重考覆盖');
+  await page.getByRole('button', { name: '重新作答' }).click();
+  assert(await page.locator('.quiz-result').count() === 0 && await page.locator('.quiz-form input:checked').count() === 0, '重新作答未清空本次答案与结果');
+  assert(await page.getByRole('button', { name: '提交并查看成绩' }).isDisabled(), '重新作答后不应能直接提交');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.path-assessment-open').first().waitFor();
+  const passedPathText = await page.locator('.path-assessment-open').first().innerText();
+  assert(passedPathText.includes('最高 80 分') && passedPathText.includes('已通过'), '刷新后未保留最高分与通过状态');
+  await page.screenshot({ path: join(artifacts, 'curriculum-desktop.png'), fullPage: true, animations: 'disabled' });
+  console.log('✓ 七阶段入口、项目模板、80 分通过、错题复习、重考与成绩持久化');
+
   await nav('动手实验');
   await page.locator('.lab-manual-head h2').filter({ hasText: '零 GPU 跑通第一个训练循环' }).waitFor();
   await page.locator('.lab-step').first().waitFor();
@@ -149,6 +203,8 @@ try {
   assert(!(await page.locator('body').innerText()).includes('这不是成品站'), '设置页仍包含已移除的抽象文案');
   const [backupDownload] = await Promise.all([page.waitForEvent('download'), page.locator('.backup-panel .btn-primary').click()]);
   assert(backupDownload.suggestedFilename().endsWith('.json'), '备份导出文件名不正确');
+  const backup = JSON.parse(readFileSync(await backupDownload.path(), 'utf8'));
+  assert(backup.data.assessmentRecords?.p0?.bestScore === 80 && backup.data.assessmentRecords.p0.passed === true, '学习备份未包含结业测验成绩');
   await page.locator('.topbar-actions .icon-btn').click();
   assert(await page.evaluate(() => document.documentElement.dataset.theme === 'dark'), '暗色主题切换失败');
   await page.screenshot({ path: join(artifacts, 'settings-dark.png'), fullPage: true, animations: 'disabled' });
@@ -165,6 +221,7 @@ try {
     assert(dimensions.scrollWidth <= dimensions.width + 1, `${route} 手机端存在横向溢出：${dimensions.scrollWidth}/${dimensions.width}`);
     if (route === 'dashboard') await page.screenshot({ path: join(artifacts, 'dashboard-mobile.png'), fullPage: true, animations: 'disabled' });
     if (route === 'start') await page.screenshot({ path: join(artifacts, 'start-mobile.png'), fullPage: true, animations: 'disabled' });
+    if (route === 'curriculum') await page.screenshot({ path: join(artifacts, 'curriculum-mobile.png'), fullPage: true, animations: 'disabled' });
     if (route === 'resources') await page.screenshot({ path: join(artifacts, 'resources-mobile.png'), fullPage: false, animations: 'disabled' });
     if (route === 'labs') {
       const layout = await page.evaluate(() => {
@@ -177,6 +234,17 @@ try {
       await page.screenshot({ path: join(artifacts, 'labs-mobile.png'), fullPage: true, animations: 'disabled' });
     }
   }
+  await page.goto(`${base}/#/curriculum`, { waitUntil: 'domcontentloaded' });
+  await page.locator('.path-assessment-open').first().click();
+  await page.locator('.stage-assessment').waitFor();
+  let assessmentDimensions = await page.evaluate(() => ({ width: window.innerWidth, pageWidth: document.documentElement.scrollWidth, clientWidth: document.querySelector('.assessment-body').clientWidth, scrollWidth: document.querySelector('.assessment-body').scrollWidth }));
+  assert(assessmentDimensions.pageWidth <= assessmentDimensions.width + 1 && assessmentDimensions.scrollWidth <= assessmentDimensions.clientWidth + 1, '手机综合项目存在横向溢出');
+  await page.screenshot({ path: join(artifacts, 'stage-project-mobile.png'), fullPage: false, animations: 'disabled' });
+  await page.locator('#p0-quiz-tab').click();
+  assessmentDimensions = await page.evaluate(() => ({ width: window.innerWidth, pageWidth: document.documentElement.scrollWidth, clientWidth: document.querySelector('.assessment-body').clientWidth, scrollWidth: document.querySelector('.assessment-body').scrollWidth }));
+  assert(assessmentDimensions.pageWidth <= assessmentDimensions.width + 1 && assessmentDimensions.scrollWidth <= assessmentDimensions.clientWidth + 1, '手机结业测验存在横向溢出');
+  await page.screenshot({ path: join(artifacts, 'stage-quiz-mobile.png'), fullPage: false, animations: 'disabled' });
+  await page.getByRole('button', { name: '关闭阶段考核' }).click();
   await page.goto(`${base}/#/start`, { waitUntil: 'domcontentloaded' });
   await page.locator('.foundation-grid > button').first().click();
   await page.locator('.topic-drawer .lesson-markdown').waitFor();

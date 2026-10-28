@@ -16,6 +16,7 @@ import { lessons } from './content/lessons.js';
 import { labs } from './content/labs.js';
 import { labGuides } from './content/lab-guides.js';
 import { builtInNotes } from './content/notes.js';
+import { stageAssessments, QUIZ_PASS_SCORE } from './content/stage-assessments.js';
 
 const PAGE_IDS = ['dashboard', 'start', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
 const PAGE_META = {
@@ -50,6 +51,7 @@ const ALL_TOPICS = modules.flatMap((module) => module.topics.map((topic) => ({ .
 const STORAGE = {
   progress: 'infra-atlas-progress-v1', bookmarks: 'infra-atlas-bookmarks-v1',
   notes: 'infra-atlas-notes-v1', labs: 'infra-atlas-labs-v1', theme: 'infra-atlas-theme-v1',
+  assessments: 'infra-atlas-assessments-v1',
 };
 
 function usePersistentState(key, fallback) {
@@ -145,6 +147,7 @@ function App() {
   const [bookmarks, setBookmarks] = usePersistentState(STORAGE.bookmarks, []);
   const [personalNotes, setPersonalNotes] = usePersistentState(STORAGE.notes, []);
   const [labProgress, setLabProgress] = usePersistentState(STORAGE.labs, {});
+  const [assessmentRecords, setAssessmentRecords] = usePersistentState(STORAGE.assessments, {});
   const [theme, setTheme] = usePersistentState(STORAGE.theme, 'light');
   const [toast, setToast] = useState('');
 
@@ -209,7 +212,8 @@ function App() {
   else if (activePage === 'start') content = <StartPage navigate={navigate} openModule={openModule}
     openTopic={openTopic} openLab={openLab} openResources={openResources} />;
   else if (activePage === 'curriculum') content = <CurriculumPage {...shared} selectedModuleId={selectedModuleId}
-    setSelectedModuleId={setSelectedModuleId} setTopicDetail={setTopicDetail} openResources={openResources} />;
+    setSelectedModuleId={setSelectedModuleId} setTopicDetail={setTopicDetail} openResources={openResources}
+    assessmentRecords={assessmentRecords} setAssessmentRecords={setAssessmentRecords} />;
   else if (activePage === 'map') content = <MapPage openModule={openModule} openResources={openResources} />;
   else if (activePage === 'resources') content = <ResourcesPage focus={resourceFocus} bookmarks={bookmarks}
     toggleBookmark={toggleBookmark} />;
@@ -219,7 +223,8 @@ function App() {
     setSelectedNoteId={setSelectedNoteId} personalNotes={personalNotes} setPersonalNotes={setPersonalNotes} showToast={setToast} />;
   else content = <MaintenancePage progress={progress} setProgress={setProgress} bookmarks={bookmarks}
     setBookmarks={setBookmarks} personalNotes={personalNotes} setPersonalNotes={setPersonalNotes}
-    labProgress={labProgress} setLabProgress={setLabProgress} theme={theme} setTheme={setTheme}
+    labProgress={labProgress} setLabProgress={setLabProgress} assessmentRecords={assessmentRecords}
+    setAssessmentRecords={setAssessmentRecords} theme={theme} setTheme={setTheme}
     showToast={setToast} completedTopics={completedTopics} />;
 
   return (
@@ -439,17 +444,20 @@ function StartPage({ navigate, openModule, openTopic, openLab, openResources }) 
   );
 }
 
-function CurriculumPage({ selectedModuleId, setSelectedModuleId, progress, setProgress, setTopicDetail, openResources }) {
+function CurriculumPage({ selectedModuleId, setSelectedModuleId, progress, setProgress, setTopicDetail, openResources, assessmentRecords, setAssessmentRecords }) {
+  const [assessmentPathId, setAssessmentPathId] = useState(null);
   const selected = modules.find((module) => module.id === selectedModuleId) || modules[0];
   const selectedDone = selected.topics.filter((topic) => progress[topic.id]).length;
+  const assessmentPath = learningPaths.find((path) => path.id === assessmentPathId);
   return (
     <>
       <PageTitle eyebrow="循序渐进" title="学习路径"
-        description="按七个阶段学习，每个阶段都有明确目标和对应实践。打开主题先读站内微课，再完成练习、自测与延伸阅读。" />
-      <section className="path-rail">
+        description="按七个阶段学习：先完成微课与练习，再用综合项目留下作品证据，最后通过五题结业测验检查理解。" />
+      <section className="path-rail" aria-label="七个学习阶段">
         {learningPaths.map((path) => {
           const pathTopics = modules.filter((module) => path.moduleIds.includes(module.id)).flatMap((module) => module.topics);
           const done = pathTopics.filter((topic) => progress[topic.id]).length;
+          const record = assessmentRecords[path.id];
           return <article key={path.id}>
             <div className="path-top"><span>{path.phase}</span><em>{path.duration}</em></div>
             <h3>{path.title}</h3><p>{path.goal}</p>
@@ -457,6 +465,11 @@ function CurriculumPage({ selectedModuleId, setSelectedModuleId, progress, setPr
               setSelectedModuleId(id); document.getElementById('module-workbench')?.scrollIntoView({ behavior: 'smooth' });
             }}>{modules.find((module) => module.id === id)?.title}</button>)}</div>
             <div className="path-project"><FlaskConical size={15} /><span>{path.project}</span></div>
+            <button className={`path-assessment-open ${record?.passed ? 'is-passed' : ''}`} onClick={() => setAssessmentPathId(path.id)} aria-label={`打开${path.title}综合项目与结业测验`}>
+              <ListChecks size={18} />
+              <span><strong>综合项目＋结业测验</strong><small>{record ? `最高 ${record.bestScore} 分 · 已作答 ${record.attempts} 次${record.passed ? ' · 已通过' : ''}` : '4 步项目 · 5 道选择题 · 80 分通过'}</small></span>
+              {record?.passed ? <CheckCircle2 size={18} /> : <ArrowRight size={17} />}
+            </button>
             <div className="path-progress"><i style={{ width: `${done / pathTopics.length * 100}%` }} /><span>{done}/{pathTopics.length}</span></div>
           </article>;
         })}
@@ -494,8 +507,153 @@ function CurriculumPage({ selectedModuleId, setSelectedModuleId, progress, setPr
           <button className="related-resources-link" onClick={() => openResources(selected.id)}><LibraryBig size={18} />查看「{selected.title}」相关资源<ArrowRight size={17} /></button>
         </div>
       </section>
+      {assessmentPath && <StageAssessment path={assessmentPath} assessment={stageAssessments[assessmentPath.id]}
+        record={assessmentRecords[assessmentPath.id]} setAssessmentRecords={setAssessmentRecords}
+        onClose={() => setAssessmentPathId(null)} onReview={(detail) => { setAssessmentPathId(null); setTopicDetail(detail); }} />}
     </>
   );
+}
+
+function projectReportMarkdown(path, assessment) {
+  const { project } = assessment;
+  return `# ${path.phase} ${path.title}｜综合项目记录\n\n## ${project.title}\n\n${project.subtitle}\n\n- 建议时长：${project.duration}\n- 环境：${project.environment}\n- 开始日期：\n- 完成日期：\n- 代码或文件位置：\n\n## 项目任务\n\n${project.brief}\n\n## 实施与验证\n\n${project.steps.map((step, index) => `### ${index + 1}. ${step.title}\n\n- 操作：${step.detail}\n- 验收标准：${step.expected}\n- [ ] 已完成\n- 实际过程与命令：\n- 结果证据（文件、数据或截图位置）：\n- 偏差与处理：`).join('\n\n')}\n\n## 交付物核对\n\n${project.deliverables.map((item) => `- [ ] ${item}：`).join('\n')}\n\n## 自评记录（总分 100）\n\n| 维度 | 分值 | 评分说明 | 自评 | 证据 |\n| --- | ---: | --- | ---: | --- |\n${project.rubric.map((row) => `| ${row.item} | ${row.points} | ${row.description} |  |  |`).join('\n')}\n\n## 结业复盘\n\n### 数据支持了什么结论？\n\n### 哪些结果没有达到预期？\n\n### 还有哪些未知项？下一步如何验证？\n`;
+}
+
+function StageAssessment({ path, assessment, record, setAssessmentRecords, onClose, onReview }) {
+  const [tab, setTab] = useState('project');
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const dialogRef = useRef(null);
+  const resultRef = useRef(null);
+  const { project, quiz } = assessment;
+  const answeredCount = quiz.filter((question) => Number.isInteger(answers[question.id])).length;
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.querySelector('button')?.focus();
+    function onKeyDown(event) {
+      if (event.key === 'Escape') { event.preventDefault(); onClose(); return; }
+      if (event.key !== 'Tab') return;
+      const focusable = [...(dialogRef.current?.querySelectorAll('button:not([disabled]), input:not([disabled]), a[href], [tabindex="0"]') || [])];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+      previousFocus?.focus();
+    };
+  }, []);
+  useEffect(() => { if (result) resultRef.current?.focus(); }, [result]);
+
+  function submitQuiz(event) {
+    event.preventDefault();
+    if (answeredCount !== quiz.length || result) return;
+    const correct = quiz.filter((question) => answers[question.id] === question.answer).length;
+    const score = Math.round(correct / quiz.length * 100);
+    const passed = score >= QUIZ_PASS_SCORE;
+    const now = new Date().toISOString();
+    setResult({ score, correct, passed, answers: { ...answers } });
+    setAssessmentRecords((state) => {
+      const previous = state[path.id] || {};
+      const everPassed = Boolean(previous.passed || passed);
+      return { ...state, [path.id]: {
+        bestScore: Math.max(previous.bestScore ?? 0, score), lastScore: score,
+        attempts: (previous.attempts || 0) + 1, passed: everPassed,
+        completedAt: everPassed ? previous.completedAt || now : null,
+        lastAttemptAt: now, lastAnswers: { ...answers },
+      } };
+    });
+  }
+  function retryQuiz() {
+    setAnswers({}); setResult(null);
+    dialogRef.current?.querySelector('.assessment-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function reviewTopic(topicId) {
+    const item = ALL_TOPICS.find((topic) => topic.id === topicId);
+    if (!item) return;
+    onReview({ module: item.module, topic: item.module.topics.find((topic) => topic.id === topicId) });
+  }
+
+  return <div className="modal-backdrop assessment-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section ref={dialogRef} className="stage-assessment modal-card" role="dialog" aria-modal="true" aria-labelledby="assessment-title">
+      <header className="assessment-head">
+        <div><span>{path.phase} / STAGE ASSESSMENT</span><h2 id="assessment-title">{path.title}</h2><p>把阶段知识合成一份可验证的作品，再检查关键概念。</p></div>
+        <button className="icon-btn" onClick={onClose} aria-label="关闭阶段考核"><X size={21} /></button>
+      </header>
+      <div className="assessment-tabs" role="tablist" aria-label="阶段考核内容">
+        <button id={`${path.id}-project-tab`} role="tab" aria-selected={tab === 'project'} aria-controls={`${path.id}-project-panel`} className={tab === 'project' ? 'active' : ''} onClick={() => setTab('project')}><FlaskConical size={17} />综合项目<span>4 步</span></button>
+        <button id={`${path.id}-quiz-tab`} role="tab" aria-selected={tab === 'quiz'} aria-controls={`${path.id}-quiz-panel`} className={tab === 'quiz' ? 'active' : ''} onClick={() => setTab('quiz')}><ListChecks size={17} />结业测验<span>5 题</span>{record?.passed && <CheckCircle2 size={15} className="assessment-tab-passed" />}</button>
+      </div>
+      <div className="assessment-body">
+        {tab === 'project' && <div id={`${path.id}-project-panel`} role="tabpanel" aria-labelledby={`${path.id}-project-tab`} className="assessment-project">
+          <section className="project-overview">
+            <span>COMPREHENSIVE PROJECT</span><h3>{project.title}</h3><h4>{project.subtitle}</h4><p>{project.brief}</p>
+            <div className="project-meta"><span><Clock3 size={16} />{project.duration}</span><span><SquareTerminal size={16} />{project.environment}</span></div>
+          </section>
+          <section className="project-section"><div className="assessment-section-title"><span>01</span><div><h3>按四步完成并验证</h3><p>每一步都留下实际结果，不用“已学习”代替作品证据。</p></div></div>
+            <div className="project-steps">{project.steps.map((step, index) => <article key={step.title} className="project-step">
+              <div className="project-step-head"><span>{String(index + 1).padStart(2, '0')}</span><h4>{step.title}</h4></div><p>{step.detail}</p>
+              <div className="project-expected"><CheckCircle2 size={17} /><div><strong>验收标准</strong><p>{step.expected}</p></div></div>
+            </article>)}</div>
+          </section>
+          <div className="project-evidence-grid">
+            <section className="project-deliverables"><div className="assessment-section-title"><span>02</span><div><h3>交付物清单</h3><p>在下载的记录模板中填写对应证据位置。</p></div></div>
+              <ul>{project.deliverables.map((item) => <li key={item}><Circle size={15} /><span>{item}</span></li>)}</ul>
+            </section>
+            <section className="project-rubric"><div className="assessment-section-title"><span>03</span><div><h3>100 分项目量规</h3><p>按证据自评，或交给同伴复核。</p></div></div>
+              <div>{project.rubric.map((row) => <article key={row.item}><div><strong>{row.item}</strong><span>{row.points} 分</span></div><p>{row.description}</p></article>)}</div>
+              <footer><span>合计</span><strong>{project.rubric.reduce((sum, row) => sum + row.points, 0)} 分</strong></footer>
+            </section>
+          </div>
+          <div className="assessment-download"><FileText size={22} /><div><strong>把过程写成可复现的项目报告</strong><p>模板已包含四步验收、交付清单、评分量规和复盘问题。</p></div><button className="btn btn-primary" onClick={() => downloadFile(`${path.id}-综合项目记录.md`, projectReportMarkdown(path, assessment), 'text/markdown;charset=utf-8')}><Download size={16} />下载项目记录模板</button></div>
+          <button className="assessment-to-quiz" onClick={() => setTab('quiz')}><span><ListChecks size={19} /><span><strong>项目完成后，检查阶段理解</strong><small>进入 5 题结业测验 · {QUIZ_PASS_SCORE} 分通过</small></span></span><ArrowRight size={19} /></button>
+        </div>}
+
+        {tab === 'quiz' && <div id={`${path.id}-quiz-panel`} role="tabpanel" aria-labelledby={`${path.id}-quiz-tab`} className="assessment-quiz">
+          <div className="assessment-quiz-intro"><div><span>FINAL QUIZ</span><h3>五题结业测验</h3><p>每题 20 分，答对至少 4 题通过。提交后可看解析，错题能直接回到对应微课。</p></div><strong>{answeredCount}<small> / {quiz.length} 已答</small></strong></div>
+          {record && <div className="quiz-history" aria-label="历史测验成绩"><div><span>历史最高</span><strong>{record.bestScore}<small> 分</small></strong></div><div><span>最近得分</span><strong>{record.lastScore}<small> 分</small></strong></div><div><span>作答次数</span><strong>{record.attempts}<small> 次</small></strong></div><em className={record.passed ? 'passed' : ''}>{record.passed ? <><CheckCircle2 size={15} />已通过</> : '尚未通过'}</em></div>}
+          {result && <section ref={resultRef} tabIndex={-1} className={`quiz-result ${result.passed ? 'is-passed' : 'is-retry'}`} aria-live="polite">
+            {result.passed ? <CheckCircle2 size={30} /> : <RotateCcw size={28} />}<div><span>{result.passed ? '阶段测验已通过' : '再复习一下，然后重试'}</span><strong>{result.score}<small> / 100 分</small></strong><p>答对 {result.correct} / {quiz.length} 题。{result.passed ? '最高分与通过状态已保存，可继续完成综合项目。' : `达到 ${QUIZ_PASS_SCORE} 分即可通过，错题下方已给出复习入口。`}</p></div>
+          </section>}
+          <form onSubmit={submitQuiz} className="quiz-form">
+            {quiz.map((question, questionIndex) => {
+              const selectedAnswer = result ? result.answers[question.id] : answers[question.id];
+              const isCorrect = result && selectedAnswer === question.answer;
+              const review = ALL_TOPICS.find((topic) => topic.id === question.topicId);
+              return <fieldset key={question.id} className={`assessment-question ${result ? isCorrect ? 'is-correct' : 'is-wrong' : ''}`}>
+                <legend><span>Q{questionIndex + 1}</span>{question.question}</legend>
+                <div className="assessment-options">{question.options.map((option, optionIndex) => {
+                  const selectedOption = selectedAnswer === optionIndex;
+                  const correctOption = result && question.answer === optionIndex;
+                  const wrongOption = result && selectedOption && !correctOption;
+                  return <label key={option} className={`assessment-option ${selectedOption ? 'is-selected' : ''} ${correctOption ? 'is-correct' : ''} ${wrongOption ? 'is-wrong' : ''}`}>
+                    <input type="radio" name={question.id} value={optionIndex} checked={selectedOption || false} disabled={Boolean(result)} onChange={() => setAnswers((state) => ({ ...state, [question.id]: optionIndex }))} />
+                    <span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span><span className="option-copy">{option}</span>
+                    {correctOption && <CheckCircle2 size={18} />}{wrongOption && <X size={18} />}
+                  </label>;
+                })}</div>
+                {result && <div className={`quiz-explanation ${isCorrect ? 'is-correct' : 'is-wrong'}`}>
+                  <strong>{isCorrect ? '回答正确' : `回答错误 · 正确答案：${String.fromCharCode(65 + question.answer)}`}</strong><p>{question.explanation}</p>
+                  {!isCorrect && review && <button type="button" onClick={() => reviewTopic(question.topicId)}><BookOpen size={16} />复习对应微课：{review.title}<ArrowRight size={15} /></button>}
+                </div>}
+              </fieldset>;
+            })}
+            <div className="quiz-submit-bar">
+              <div><strong>{result ? '本次作答已提交' : answeredCount === quiz.length ? '已完成全部题目，可以提交' : `还有 ${quiz.length - answeredCount} 题未作答`}</strong><span>成绩只保存在当前浏览器，可随学习备份导出。</span></div>
+              {result ? <button type="button" className="btn btn-ghost" onClick={retryQuiz}><RotateCcw size={16} />重新作答</button> : <button type="submit" className="btn btn-primary" disabled={answeredCount !== quiz.length}><CheckCircle2 size={17} />提交并查看成绩</button>}
+            </div>
+          </form>
+        </div>}
+      </div>
+    </section>
+  </div>;
 }
 
 function MapPage({ openModule, openResources }) {
@@ -780,11 +938,11 @@ function NotesPage({ notes, selectedNoteId, setSelectedNoteId, personalNotes, se
   );
 }
 
-function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, personalNotes, setPersonalNotes, labProgress, setLabProgress, theme, setTheme, showToast, completedTopics }) {
+function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, personalNotes, setPersonalNotes, labProgress, setLabProgress, assessmentRecords, setAssessmentRecords, theme, setTheme, showToast, completedTopics }) {
   const fileInput = useRef(null);
   const completedLabSteps = Object.values(labProgress).reduce((total, steps) => total + steps.length, 0);
   function exportBackup() {
-    const payload = { product: 'Infra Atlas', version: 1, exportedAt: new Date().toISOString(), data: { progress, bookmarks, personalNotes, labProgress, theme } };
+    const payload = { product: 'Infra Atlas', version: 1, exportedAt: new Date().toISOString(), data: { progress, bookmarks, personalNotes, labProgress, assessmentRecords, theme } };
     downloadFile(`infra-atlas-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(payload, null, 2), 'application/json');
     showToast('学习数据备份已导出');
   }
@@ -794,10 +952,11 @@ function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, perso
     try {
       const payload = JSON.parse(await file.text());
       if (payload.product !== 'Infra Atlas' || !payload.data) throw new Error('invalid');
-      if (!window.confirm('导入会替换当前浏览器中的进度、收藏、个人笔记和实验记录。建议先导出备份。继续吗？')) return;
+      if (!window.confirm('导入会替换当前浏览器中的进度、收藏、个人笔记、实验记录和测验成绩。建议先导出备份。继续吗？')) return;
       const data = payload.data;
       setProgress(data.progress || {}); setBookmarks(data.bookmarks || []); setPersonalNotes(data.personalNotes || []);
-      setLabProgress(data.labProgress || {}); if (['light', 'dark'].includes(data.theme)) setTheme(data.theme);
+      setLabProgress(data.labProgress || {}); setAssessmentRecords(data.assessmentRecords || {});
+      if (['light', 'dark'].includes(data.theme)) setTheme(data.theme);
       showToast('备份已恢复');
     } catch { showToast('无法读取：请选择本站导出的备份文件'); }
     finally { event.target.value = ''; }
@@ -810,10 +969,10 @@ function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, perso
       <div className="maintenance-grid">
         <section className="panel content-guide"><SectionHead eyebrow="使用帮助" title="如何记录学习过程" />
           <div className="update-methods"><article><span>01</span><div><h3>标记已经掌握的主题</h3><p>在“学习路径”中打开主题，阅读说明和相关资料后，再将它标记为已完成。首页会显示下一次可以继续学习的内容。</p></div></article>
-            <article><span>02</span><div><h3>边做实验边保存结果</h3><p>在“动手实验”中复制命令并逐步核对结果。每个实验都可以下载 Markdown 记录模板，用来保存环境、参数、数据和问题。</p></div></article>
-            <article><span>03</span><div><h3>把笔记和进度一起带走</h3><p>笔记、收藏、主题进度和实验勾选都保存在当前浏览器。换设备时，先在这里导出备份，再在新设备上恢复。</p></div></article></div>
+            <article><span>02</span><div><h3>边做实验边保存结果</h3><p>在“动手实验”中复制命令并逐步核对结果。每个实验和阶段综合项目都可以下载 Markdown 记录模板，用来保存环境、参数、数据和问题。</p></div></article>
+            <article><span>03</span><div><h3>把笔记、成绩和进度一起带走</h3><p>笔记、收藏、主题进度、实验勾选和结业测验成绩都保存在当前浏览器。换设备时，先在这里导出备份，再在新设备上恢复。</p></div></article></div>
         </section>
-        <aside className="panel backup-panel"><SectionHead eyebrow="学习数据" title="备份与恢复" /><div className="backup-icon"><HardDrive size={34} /></div><p>备份包含主题进度、资源收藏、实验勾选、个人笔记和显示设置。恢复备份会替换当前浏览器里的对应记录。</p>
+        <aside className="panel backup-panel"><SectionHead eyebrow="学习数据" title="备份与恢复" /><div className="backup-icon"><HardDrive size={34} /></div><p>备份包含主题进度、资源收藏、实验勾选、结业测验成绩、个人笔记和显示设置。恢复备份会替换当前浏览器里的对应记录。</p>
           <button className="btn btn-primary" onClick={exportBackup}><Download size={17} />导出学习数据</button><button className="btn btn-ghost" onClick={() => fileInput.current?.click()}><Upload size={17} />从备份恢复</button>
           <input ref={fileInput} type="file" accept="application/json,.json" onChange={importBackup} hidden /><small>JSON 文件只在你的设备上处理，不会上传</small>
         </aside>
