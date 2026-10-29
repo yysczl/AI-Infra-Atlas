@@ -1,4 +1,4 @@
-const noteFiles = import.meta.glob('./content/notes/*.md', {
+const noteFiles = import.meta.glob('./notes/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,

@@ -8,23 +8,23 @@ export const modules = [
       { id: 'base-linux', title: 'Linux 命令行与 Git', summary: '学会目录、文件、管道、进程、权限和版本提交，能独立完成后续实验的基本操作。', question: '为什么实验排障时，保存完整命令和原始日志比只截一张报错图更有用？' },
       { id: 'base-python', title: 'Python 环境与张量基础', summary: '理解虚拟环境、包版本、函数、数据结构，以及张量的 shape、dtype 和 device。', question: '为什么“代码在我电脑上能跑”不等于别人也能复现同一个实验？' },
       { id: 'base-ml', title: '看懂第一个训练循环', summary: '串起数据、前向计算、损失、反向传播和参数更新，分清训练与推理。', question: 'loss 下降时，模型参数、梯度和优化器状态分别发生了什么变化？' },
-      { id: 'base-workflow', title: '可复现实验的学习方法', summary: '固定种子、记录配置、保存原始结果，一次只改变一个变量，用证据回答性能问题。', question: '如果两次实验同时换了模型、 batch 和精度，为什么无法判断提速来自哪里？' },
+      { id: 'base-workflow', title: '可复现实验的学习方法', summary: '固定种子、记录配置、保存原始结果，一次只改变一个变量，比较不同配置的性能。', question: '如果两次实验同时换了模型、 batch 和精度，为什么无法判断提速来自哪里？' },
     ],
   },
   {
-    id: 'systems', order: 1, title: '系统基础', en: 'SYSTEMS', layer: '基础底座', level: '入门', hours: 24,
-    brief: '先理解机器如何执行，再理解 AI 为何昂贵。',
-    description: '建立操作系统、体系结构、网络与性能分析的共同语言，能定位瓶颈发生在计算、内存、I/O 还是通信。',
+    id: 'systems', order: 1, title: '系统基础', en: 'SYSTEMS', layer: '系统与硬件', level: '入门', hours: 24,
+    brief: '操作系统、内存、并行计算与性能分析。',
+    description: '学习操作系统、体系结构和性能分析，区分计算、内存、I/O 与通信瓶颈。',
     outcomes: ['读懂一次训练或推理请求的完整执行链路', '使用性能工具区分 CPU、GPU、I/O 与等待', '用吞吐、延迟、利用率描述系统而非凭感觉'],
     topics: [
       { id: 'sys-os', title: '进程、线程与异步 I/O', summary: '理解调度、上下文切换、同步原语和异步执行，为运行时与服务并发打基础。', question: 'Python 线程、进程与异步任务分别适合哪类 AI 工作负载？' },
       { id: 'sys-memory', title: '内存层次与虚拟内存', summary: '从缓存、主存到显存建立局部性思维，理解分页、缺页与内存带宽。', question: '为什么数据布局不变、算法不变，缓存命中率却能改变性能？' },
-      { id: 'sys-arch', title: '计算机体系结构与并行', summary: '学习指令流水线、SIMD、NUMA 与一致性，建立硬件性能直觉。', question: '计算密集和内存密集负载的优化方法有什么根本差异？' },
-      { id: 'sys-perf', title: 'Linux 性能分析', summary: '掌握 perf、top、iostat、strace 等工具，用证据构造性能分析路径。', question: 'GPU 利用率低时，如何证明瓶颈来自主机侧数据准备？' },
+      { id: 'sys-arch', title: '计算机体系结构与并行', summary: '学习指令流水线、SIMD、NUMA 与一致性，分析硬件对并行性能的影响。', question: '计算密集和内存密集负载的优化方法有什么根本差异？' },
+      { id: 'sys-perf', title: 'Linux 性能分析', summary: '掌握 perf、top、iostat、strace 等工具，根据采样和日志定位瓶颈。', question: 'GPU 利用率低时，如何证明瓶颈来自主机侧数据准备？' },
     ],
   },
   {
-    id: 'hardware', order: 2, title: 'GPU 与加速器', en: 'ACCELERATORS', layer: '基础底座', level: '入门', hours: 20,
+    id: 'hardware', order: 2, title: 'GPU 与加速器', en: 'ACCELERATORS', layer: '系统与硬件', level: '入门', hours: 20,
     brief: '看懂算力、显存、互联与芯片差异。',
     description: '理解 GPU/TPU 等加速器的执行模型和关键规格，学会针对真实工作负载选择硬件，而不是只比较峰值算力。',
     outcomes: ['解释 SM、Tensor Core、HBM 与互联的作用', '估算模型权重、激活和 KV Cache 的显存需求', '依据精度、生态、产能与 TCO 评估加速平台'],
@@ -37,7 +37,7 @@ export const modules = [
   },
   {
     id: 'kernels', order: 3, title: '算子与 AI 编译器', en: 'KERNELS & COMPILERS', layer: '运行时与编译', level: '进阶', hours: 36,
-    brief: '从“会调用”走向“知道算子为什么快”。',
+    brief: '编写 GPU 算子，分析编译与融合的性能影响。',
     description: '覆盖 CUDA/Triton 算子编写、图捕获、算子融合、自动调优和 ML 编译栈，学会从 profile 找问题，并用基准测试验证优化。',
     outcomes: ['写出并基准测试一个简单 GPU Kernel', '解释融合、 tiling、vectorization 与布局优化', '定位图断裂、重编译和无效优化的根因'],
     topics: [
@@ -49,7 +49,7 @@ export const modules = [
   },
   {
     id: 'frameworks', order: 4, title: '训练框架与运行时', en: 'TRAINING RUNTIME', layer: '运行时与编译', level: '入门', hours: 28,
-    brief: '理解 autograd、执行器和训练循环背后的故事。',
+    brief: '张量、自动微分、数据加载与训练循环。',
     description: '以 PyTorch 为主、JAX 为辅，掌握张量、自动微分、模块、数据加载、混合精度和可复现训练。',
     outcomes: ['独立实现可读、可测、可恢复的训练循环', '解释 autograd 的图构建与反向传播开销', '用 profiler 找到数据、主机与设备之间的空隙'],
     topics: [
@@ -61,7 +61,7 @@ export const modules = [
   },
   {
     id: 'distributed', order: 5, title: '分布式训练', en: 'DISTRIBUTED TRAINING', layer: '训练系统', level: '进阶', hours: 40,
-    brief: '把模型切开放下，也把计算重新拼起来。',
+    brief: '多 GPU 训练中的模型切分、通信与恢复。',
     description: '系统学习数据、张量、流水、序列与专家并行，以及 ZeRO/FSDP、激活重计算和弹性容错。',
     outcomes: ['为给定模型与集群选择并行组合', '计算主要状态的显存占用和通信量', '设计可恢复的分布式训练与扩缩容方案'],
     topics: [
@@ -73,7 +73,7 @@ export const modules = [
   },
   {
     id: 'network', order: 6, title: '集群网络与集合通信', en: 'NETWORK & NCCL', layer: '训练系统', level: '深入', hours: 24,
-    brief: '训练集群里，通信常常就是隐藏的计算图。',
+    brief: '集合通信、GPU 互联与集群网络排障。',
     description: '从 RDMA、InfiniBand/RoCE 到 NCCL 集合通信，学习拓扑感知、拥塞排查与通信基准测试。',
     outcomes: ['解释 AllReduce、AllGather、ReduceScatter 与 All-to-All', '使用 NCCL Tests 建立通信基线', '结合拓扑定位链路、拥塞和配置问题'],
     topics: [
@@ -85,7 +85,7 @@ export const modules = [
   },
   {
     id: 'data', order: 7, title: '数据、存储与 Checkpoint', en: 'DATA & STORAGE', layer: '数据系统', level: '进阶', hours: 26,
-    brief: '让数据供得上，让训练状态找得回。',
+    brief: '训练数据读取、存储与 Checkpoint 恢复。',
     description: '覆盖数据格式、流式读取、对象存储、缓存、数据版本和分布式 Checkpoint，构建高吞吐可恢复的数据路径。',
     outcomes: ['为大规模样本设计可分片、可重放的数据管线', '区分小文件、元数据和吞吐瓶颈', '制定 Checkpoint 一致性、保留与恢复策略'],
     topics: [
@@ -97,7 +97,7 @@ export const modules = [
   },
   {
     id: 'inference', order: 8, title: 'LLM 推理引擎', en: 'INFERENCE ENGINES', layer: '推理与服务', level: '进阶', hours: 38,
-    brief: '把每一个 token 的延迟、显存和成本算清楚。',
+    brief: 'LLM 推理的计算过程、缓存与性能优化。',
     description: '深入 prefill/decode、KV Cache、连续批处理、分页注意力、量化、投机解码与分布式推理。',
     outcomes: ['解释 TTFT、TPOT、端到端延迟与 goodput', '估算 KV Cache 并分析批处理与显存关系', '设计可复现的推理性能与精度对照实验'],
     topics: [
@@ -109,7 +109,7 @@ export const modules = [
   },
   {
     id: 'serving', order: 9, title: '模型服务与流量治理', en: 'MODEL SERVING', layer: '推理与服务', level: '进阶', hours: 30,
-    brief: '从“能返回结果”到“可承诺服务质量”。',
+    brief: '模型部署、请求路由、扩缩容与容量规划。',
     description: '覆盖模型打包、在线服务、路由、灰度、自动扩缩容、多模型托管、网关与容量规划。',
     outcomes: ['定义并测量面向业务的推理 SLO', '设计灰度、回滚与突发流量保护', '根据流量曲线规划副本、队列和容量'],
     topics: [
@@ -121,7 +121,7 @@ export const modules = [
   },
   {
     id: 'platform', order: 10, title: '算力平台与云原生', en: 'AI PLATFORMS', layer: '平台与调度', level: '进阶', hours: 32,
-    brief: '把一堆 GPU 变成可分配、可隔离的平台。',
+    brief: 'GPU 资源调度、作业队列与多租户隔离。',
     description: '学习容器、Kubernetes、Slurm、Ray、GPU 调度、队列、配额、多租户与异构资源管理。',
     outcomes: ['部署一个可观测的 GPU 工作负载', '理解批调度、gang scheduling 与队列公平性', '在利用率、隔离性和排队时间之间做设计取舍'],
     topics: [
@@ -133,7 +133,7 @@ export const modules = [
   },
   {
     id: 'observability', order: 11, title: '可观测性与稳定性', en: 'OBSERVABILITY & SRE', layer: '平台与调度', level: '进阶', hours: 28,
-    brief: '没有指标、追踪和复盘，优化只是猜测。',
+    brief: '用指标、日志与追踪定位性能和稳定性问题。',
     description: '建立从硬件到业务的观测体系，覆盖日志、指标、追踪、告警、故障演练、SRE 与事故复盘。',
     outcomes: ['搭建 GPU 与应用指标的分层仪表盘', '用 trace 串起网关、调度器和推理引擎', '写出可执行、无指责的事故复盘'],
     topics: [
@@ -145,7 +145,7 @@ export const modules = [
   },
   {
     id: 'rag', order: 12, title: 'RAG 与 Agent 基础设施', en: 'RAG & AGENT INFRA', layer: '应用基础设施', level: '进阶', hours: 26,
-    brief: '上下文、工具和状态，也需要可靠的系统工程。',
+    brief: '检索索引、Agent 状态管理与工具执行。',
     description: '覆盖数据摄入、Embedding、向量检索、混合搜索、上下文缓存、Agent 运行时、工具沙箱和 MCP。',
     outcomes: ['构建可评估、可追溯的检索管线', '理解向量索引在召回、延迟与内存间的权衡', '为工具执行设计状态、权限、超时和隔离'],
     topics: [
@@ -157,7 +157,7 @@ export const modules = [
   },
   {
     id: 'mlops', order: 13, title: 'MLOps 与 LLMOps', en: 'MLOPS & LLMOPS', layer: '应用基础设施', level: '入门', hours: 24,
-    brief: '让实验可复现，让模型评测与发布有据可查。',
+    brief: '实验追踪、模型评测与版本发布。',
     description: '覆盖实验追踪、模型注册、数据与特征管线、离线/在线评测、反馈数据和持续交付。',
     outcomes: ['设计可复现的实验元数据与对比视图', '建立模型从候选到发布的门禁', '将离线指标、线上质量与人工反馈分开衡量'],
     topics: [
@@ -169,7 +169,7 @@ export const modules = [
   },
   {
     id: 'governance', order: 14, title: '成本、安全与治理', en: 'FINOPS & GOVERNANCE', layer: '应用基础设施', level: '进阶', hours: 20,
-    brief: '真正可用的基础设施，也要算得过账、守得住边界。',
+    brief: '基础设施的成本核算、安全与数据合规。',
     description: '将 FinOps、容量效率、供应链、模型与数据安全、隐私和 AI 风险治理纳入架构决策。',
     outcomes: ['按租户、模型和请求拆解单位成本', '识别模型供应链与工具调用的关键风险', '把安全与合规要求转化为工程控制点'],
     topics: [
@@ -182,12 +182,12 @@ export const modules = [
 ];
 
 export const learningPaths = [
-  { id: 'p0', phase: '00', title: '补齐新手先修基础', duration: '第 1–2 周', moduleIds: ['foundations'], goal: '从命令行、Python 和第一个训练循环起步，不需要 GPU 也能完成。', project: '跑通一个零 GPU 训练实验，保存代码、依赖版本、三次对照结果和复盘。' },
-  { id: 'p1', phase: '01', title: '建立系统直觉', duration: '第 3–5 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 磁盘性能基线报告。' },
-  { id: 'p2', phase: '02', title: '吃透单卡执行', duration: '第 6–9 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，能用 profile 提出假设，再用对照实验验证。', project: '优化一个融合算子，并提交正确性与性能对照。' },
-  { id: 'p3', phase: '03', title: '跨越多机训练', duration: '第 10–14 周', moduleIds: ['distributed', 'network', 'data'], goal: '理解并行策略、通信和存储如何共同决定扩展效率。', project: '设计并验证一套多机训练、Checkpoint 与故障恢复方案。' },
-  { id: 'p4', phase: '04', title: '做好在线推理', duration: '第 15–19 周', moduleIds: ['inference', 'serving'], goal: '能针对流量与 SLO 调整引擎、批处理、缓存、量化和容量。', project: '完成一次真实流量分布的推理压测与容量规划。' },
-  { id: 'p5', phase: '05', title: '走向生产平台', duration: '第 20–24 周', moduleIds: ['platform', 'observability'], goal: '让 GPU 工作负载可调度、可观测、可回滚、可演练。', project: '部署带指标、告警和故障演练的 GPU 服务。' },
+  { id: 'p0', phase: '00', title: 'Linux、Python 与训练入门', duration: '第 1–2 周', moduleIds: ['foundations'], goal: '从命令行、Python 和第一个训练循环起步，不需要 GPU 也能完成。', project: '跑通一个零 GPU 训练实验，保存代码、依赖版本、三次对照结果和复盘。' },
+  { id: 'p1', phase: '01', title: '系统与硬件基础', duration: '第 3–5 周', moduleIds: ['systems', 'hardware'], goal: '能读懂训练与推理链路，理解算力、显存、带宽和延迟。', project: '完成一台机器的 CPU / GPU / 内存 / 磁盘性能基线报告。' },
+  { id: 'p2', phase: '02', title: '单卡训练与算子优化', duration: '第 6–9 周', moduleIds: ['frameworks', 'kernels'], goal: '从训练循环深入到算子与编译，能用 profile 提出假设，再用对照实验验证。', project: '优化一个融合算子，并提交正确性与性能对照。' },
+  { id: 'p3', phase: '03', title: '多机训练与通信', duration: '第 10–14 周', moduleIds: ['distributed', 'network', 'data'], goal: '理解并行策略、通信和存储如何共同决定扩展效率。', project: '设计并验证一套多机训练、Checkpoint 与故障恢复方案。' },
+  { id: 'p4', phase: '04', title: '推理引擎与服务', duration: '第 15–19 周', moduleIds: ['inference', 'serving'], goal: '能针对流量与 SLO 调整引擎、批处理、缓存、量化和容量。', project: '完成一次真实流量分布的推理压测与容量规划。' },
+  { id: 'p5', phase: '05', title: '平台部署与运维', duration: '第 20–24 周', moduleIds: ['platform', 'observability'], goal: '让 GPU 工作负载可调度、可观测、可回滚、可演练。', project: '部署带指标、告警和故障演练的 GPU 服务。' },
   { id: 'p6', phase: '06', title: '完成一个应用基础设施项目', duration: '长期迭代', moduleIds: ['rag', 'mlops', 'governance'], goal: '为一个 RAG 应用补上检索评测、工具权限测试、发布记录和成本估算。', project: '发布一篇完整架构复盘：约束、方案、数据、失败与下一步。' },
 ];
 

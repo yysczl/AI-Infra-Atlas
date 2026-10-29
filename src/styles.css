@@ -306,11 +306,6 @@ h1, h2, h3, p { margin-top: 0; }
 .problem-grid h3 { margin: 18px 0 7px; font-size: 14px; }
 .problem-grid p { flex: 1; color: var(--muted); font-size: 10px; line-height: 1.7; }
 .problem-grid span { display: flex; align-items: center; gap: 5px; color: var(--ink-soft); font-size: 9px; }
-.principles-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 28px; background: var(--line); border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
-.principles-strip > div { padding: 22px; display: grid; grid-template-columns: 30px 1fr; background: var(--surface); }
-.principles-strip span { grid-row: span 2; color: var(--accent-deep); font: 400 10px var(--mono); }
-.principles-strip strong { font-size: 12px; }
-.principles-strip p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
 
 /* Library */
 .library-controls { padding: 20px 22px 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
@@ -624,7 +619,7 @@ code { font-family: var(--mono); }
   .continue-panel { padding: 20px 17px 8px; }
   .next-list > button { grid-template-columns: 25px 1fr 17px; gap: 9px; }
   .next-list em { max-width: 220px; }
-  .module-grid, .resource-grid, .featured-resources, .path-rail, .problem-grid, .principles-strip { grid-template-columns: 1fr; }
+  .module-grid, .resource-grid, .featured-resources, .path-rail, .problem-grid { grid-template-columns: 1fr; }
   .module-card { min-height: 195px; }
   .home-bottom-grid { gap: 0; }
   .module-detail { padding: 21px 17px; }
@@ -643,7 +638,6 @@ code { font-family: var(--mono); }
   .atlas-stack > button > svg { grid-column: 3; grid-row: 1; }
   .atlas-detail { padding: 22px 17px; }
   .atlas-module-list { grid-template-columns: 1fr; }
-  .principles-strip > div { padding: 18px; }
   .library-controls { padding: 14px; }
   .filter-row { align-items: stretch; flex-direction: column; }
   .filter-row label { min-width: 0; }

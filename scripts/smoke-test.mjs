@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { once } from 'node:events';
 import { stageAssessments } from '../src/content/stage-assessments.js';
+import { modules } from '../src/content/curriculum.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const artifacts = join(root, 'artifacts');
@@ -51,8 +52,21 @@ try {
   await page.goto(`${base}/#/dashboard`, { waitUntil: 'domcontentloaded' });
   await page.locator('.hero h1').waitFor();
   assert(await page.locator('.module-card').count() === 15, '首页知识领域数量不正确');
+  assert(await page.locator('.recent-notes > button').count() === 3, '首页未加载内置笔记模板');
   await page.screenshot({ path: join(artifacts, 'dashboard-desktop.png'), fullPage: true });
   console.log('✓ 首页、统计与 15 个知识领域');
+
+  const earlyProgress = Object.fromEntries(modules.filter((module) => ['foundations', 'systems', 'hardware'].includes(module.id)).flatMap((module) => module.topics.map((topic) => [topic.id, true])));
+  await page.evaluate((progress) => localStorage.setItem('infra-atlas-progress-v1', JSON.stringify(progress)), earlyProgress);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert((await page.locator('.next-list button').first().innerText()).includes('Tensor 与自动微分'), '推荐课程应先进入训练框架，再进入算子');
+  await page.locator('.sidebar-progress button').click();
+  await page.locator('.topic-drawer').waitFor();
+  assert((await page.locator('.topic-drawer h2').innerText()).includes('Tensor 与自动微分'), '继续学习没有打开下一节未完成课程');
+  await page.getByRole('button', { name: '关闭主题详情' }).click();
+  await page.evaluate(() => localStorage.removeItem('infra-atlas-progress-v1'));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  console.log('✓ 推荐顺序与阶段目录一致，继续学习直接打开课程');
 
   await nav('新手起步');
   await page.locator('.start-hero h1').waitFor();
@@ -188,8 +202,20 @@ try {
   console.log('✓ 完整实验步骤、命令复制、结果验证、模板下载与进度保存');
 
   await nav('我的笔记');
+  assert(await page.locator('.note-list-scroll > button').count() === 4, '笔记页应加载四篇内置笔记');
+  await page.locator('.note-list-scroll > button').filter({ hasText: '技术复盘模板' }).click();
+  assert((await page.locator('.markdown-body').innerText()).includes('背景与约束'), '内置笔记正文未正确显示');
+  await page.locator('.notes-list input').fill('没有匹配的测试关键词');
+  assert(await page.locator('.note-reader .markdown-body').count() === 0, '无匹配结果时仍显示旧笔记');
+  await page.locator('.notes-list input').fill('');
   await page.getByRole('button', { name: '新建笔记' }).click();
+  await page.locator('.editor-fields textarea').fill('');
+  assert(await page.locator('.note-editor').isVisible(), '清空正文后编辑器不应自动关闭');
   await page.locator('.editor-title').fill('UI 自动化验收笔记');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: '关闭笔记编辑器' }).click();
+  assert(await page.locator('.note-editor').isVisible(), '取消放弃修改后编辑器应保留');
+  assert(await page.locator('.editor-title').inputValue() === 'UI 自动化验收笔记', '关闭确认丢失了未保存标题');
   await page.locator('.editor-fields input').nth(1).fill('测试, 本地笔记');
   await page.locator('.editor-fields textarea').fill('# UI 自动化验收笔记\n\n这是浏览器测试创建的内容。\n\n- 支持列表\n- 支持 **Markdown**');
   await page.locator('.editor-foot .btn-primary').click();
