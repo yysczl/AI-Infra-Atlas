@@ -1,0 +1,108 @@
+.inference-area .reader-layout { display:grid; grid-template-columns:200px minmax(0,740px) 140px; gap:24px; align-items:start; justify-content:center; }
+.inference-area .reader-chapters,.inference-area .reader-toc { position:sticky; top:100px; max-height:calc(100vh - 130px); overflow-y:auto; }
+.inference-area .reader-chapters h2,.inference-area .reader-toc h2 { font-size:14px; font-weight:600; margin:20px 0 12px; }
+.inference-area .reader-back { display:flex; gap:6px; align-items:center; font-size:12px; color:var(--muted); }
+.inference-area .reader-chapters ol,.inference-area .reader-toc ol,.inference-area .reader-mobile-nav ol { list-style:none; padding:0; margin:0; }
+.inference-area .reader-chapters li a,.inference-area .reader-mobile-nav li a { display:flex; align-items:center; gap:8px; padding:10px; border-radius:6px; font-size:13px; color:var(--ink-soft); }
+.inference-area .reader-chapters li a > span { font:400 11px var(--mono); color:var(--muted); }
+.inference-area .reader-chapters a[aria-current],.inference-area .reader-mobile-nav a[aria-current] { color:var(--accent-deep); background:var(--surface-alt); }
+.inference-area .reader-chapters li svg { flex-shrink:0; margin-left:auto; color:var(--accent-deep); }
+.inference-area .reader-toc { border-left:1px solid var(--line); padding-left:18px; }
+.inference-area .reader-toc h2 { margin-top:0; }
+.inference-area .reader-toc a { display:block; padding:6px 0; font-size:12px; color:var(--muted); line-height:1.8; }
+.inference-area .reader-toc a[aria-current],.inference-area .reader-toc a:hover { color:var(--accent-deep); }
+.inference-area .lesson-article { min-width:0; }
+.inference-area .lesson-header h1 { font-size:34px; letter-spacing:-.8px; line-height:1.45; margin:12px 0 14px; }
+.inference-area .lesson-header > p { font-size:15px; color:var(--muted); line-height:1.9; }
+.inference-area .lesson-prerequisites { display:flex; flex-wrap:wrap; gap:8px; font-size:13px; color:var(--muted); padding-bottom:26px; border-bottom:1px solid var(--line); }
+.inference-area .lesson-prerequisites a { color:var(--accent-deep); text-decoration:underline; text-underline-offset:3px; }
+.inference-area .lesson-article .markdown-body { padding:0; font-size:16px; line-height:1.95; overflow-wrap:anywhere; }
+.inference-area .lesson-article .markdown-body p { font-size:inherit; line-height:inherit; margin:16px 0; }
+.inference-area .lesson-article .markdown-body h2 { font-size:23px; letter-spacing:-.3px; margin:38px 0 16px; border:0; padding:0; }
+.inference-area .lesson-article .markdown-body h3 { font-size:19px; margin:30px 0 14px; }
+.inference-area .lesson-article h2[id],.inference-area .lesson-article h3[id] { scroll-margin-top:90px; }
+.inference-area .lesson-article .markdown-body a,.inference-area .lesson-references a { color:var(--accent-deep); text-decoration:underline; text-underline-offset:3px; }
+.inference-area .lesson-article .markdown-body ul,.inference-area .lesson-article .markdown-body ol { padding-left:24px; }
+.inference-area .reader-table { overflow-x:auto; max-width:100%; margin:22px 0; }
+.inference-area .lesson-article .markdown-body .reader-table table { display:table; width:100%; margin:0; font-size:13px; line-height:1.7; }
+.inference-area .lesson-article .markdown-body th,.inference-area .lesson-article .markdown-body td { padding:12px; }
+.inference-area .lesson-article .code-block { margin:20px 0; }
+.inference-area .lesson-article .code-block pre { margin:0; padding:18px; max-width:100%; overflow-x:auto; font-size:12px; line-height:1.8; }
+.inference-area .lesson-article .code-block code { background:none; padding:0; border:0; color:inherit; font-size:inherit; white-space:pre; }
+.inference-area .reader-mobile-nav { display:none; }
+.inference-area .lesson-self-check,.inference-area .legacy-practice,.inference-area .lesson-labs,.inference-area .lesson-references { border-top:1px solid var(--line); margin-top:32px; padding-top:26px; font-size:15px; line-height:1.9; }
+.inference-area .lesson-self-check h2,.inference-area .legacy-practice h2,.inference-area .lesson-labs h2 { font-size:21px; }
+.inference-area .lesson-article details summary { color:var(--accent-deep); cursor:pointer; padding:8px 0; font-size:14px; }
+.inference-area .lesson-self-check details > p,.inference-area .legacy-practice details { padding:12px 16px; background:var(--surface-alt); border-radius:6px; }
+.inference-area .legacy-practice .practice-card { padding:18px; border:1px solid var(--line); border-radius:8px; }
+.inference-area .legacy-practice h3 { font-size:17px; }
+.inference-area .lesson-labs > a { display:flex; gap:15px; align-items:center; padding:20px 0; color:var(--accent-deep); }
+.inference-area .lesson-labs > a > span { flex:1; }
+.inference-area .lesson-labs small { display:block; color:var(--muted); font-size:12px; margin-top:6px; }
+.inference-area .lesson-references li { margin-bottom:18px; }
+.inference-area .lesson-references p { font-size:13px; color:var(--muted); }
+.inference-area .reader-completion { margin-top:38px; padding-top:26px; border-top:1px solid var(--line); }
+.inference-area .reader-completion > p { color:var(--muted); font-size:12px; }
+.inference-area .reader-completion nav { display:flex; justify-content:space-between; gap:25px; margin-top:28px; }
+.inference-area .reader-completion nav a { display:flex; align-items:center; gap:10px; color:var(--accent-deep); font-size:13px; }
+.inference-area .reader-completion nav a:last-child { text-align:right; }
+.inference-area .reader-completion small { display:block; color:var(--ink-soft); font-size:14px; margin-top:5px; }
+.inference-area .reader-load-state { padding:35px 0; }
+.inference-area .reader-load-state button { margin:14px; }
+.inference-area .lesson-demo { margin:24px 0; padding:22px; background:var(--surface-alt); border:1px solid var(--line); border-radius:8px; font-size:14px; }
+.inference-area .lesson-demo figcaption { color:var(--ink-soft); font-weight:500; margin-bottom:18px; font-size:13px; }
+.inference-area .lesson-article .lesson-demo p { font-size:12px; line-height:1.8; color:var(--muted); }
+.inference-area .lesson-demo button,.inference-area .lesson-demo select { padding:8px 12px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-soft); border-radius:6px; font:inherit; }
+.inference-area .lesson-demo button[aria-pressed='true'] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.inference-area .lesson-demo button:disabled { opacity:.4; cursor:default; }
+.inference-area .demo-controls { display:flex; flex-wrap:wrap; gap:20px; }
+.inference-area .lesson-demo label { display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:13px; }
+.inference-area .demo-result { display:block; margin-top:20px; font-size:24px; color:var(--ink); font-variant-numeric:tabular-nums; }
+.inference-area .lesson-article .demo-pipeline { display:flex; flex-wrap:wrap; gap:12px; padding:0; margin:0; list-style:none; }
+.inference-area .demo-pipeline > * { flex:1; min-width:120px; padding:12px; background:var(--surface); border:1px solid var(--line); border-radius:6px; font-size:12px; }
+.inference-area .demo-pipeline b { display:block; margin-top:8px; color:var(--accent-deep); font:500 13px var(--mono); overflow-wrap:anywhere; }
+.inference-area .demo-stepper { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; font-size:12px; }
+.inference-area .demo-toggle { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+.inference-area .batch-table { overflow-x:auto; }
+.inference-area .lesson-article .batch-table table { font-size:12px; margin:0; width:100%; }
+.inference-area .lesson-article .batch-table th,.inference-area .lesson-article .batch-table td { text-align:center; padding:10px 8px; white-space:nowrap; }
+.inference-area .batch-A,.inference-area .batch-C { background:color-mix(in srgb,var(--accent) 14%,var(--surface)); }
+.inference-area .batch-B { background:var(--surface); }
+.inference-area .batch-idle { color:var(--muted); }
+@media(max-width:1390px) { .inference-area .reader-layout { grid-template-columns:200px minmax(0,1fr); gap:24px; } .inference-area .reader-toc { display:none; } .inference-area .reader-mobile-nav { display:block; margin:0 0 24px 224px; } .inference-area .reader-mobile-nav details:first-child { display:none; } .inference-area .reader-mobile-nav summary { cursor:pointer; padding:10px 0; color:var(--accent-deep); font-size:13px; } }
+@media(max-width:800px) { .inference-area .reader-layout { display:block; } .inference-area .reader-chapters { display:none; } .inference-area .reader-mobile-nav { margin:0 0 28px; padding-bottom:12px; border-bottom:1px solid var(--line); } .inference-area .reader-mobile-nav details:first-child { display:block; } .inference-area .lesson-header h1 { font-size:28px; } .inference-area .lesson-article .markdown-body { font-size:15px; } .inference-area .lesson-article .markdown-body h2 { font-size:21px; } .inference-area .lesson-demo { padding:16px; } .inference-area .demo-result { font-size:21px; } .inference-area .reader-completion nav { gap:15px; } .inference-area .reader-completion nav a { max-width:48%; } }
+@media(prefers-reduced-motion:reduce) { .inference-area *,.inference-area *::before,.inference-area *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
+
+.inference-area .exercise-answer { padding:12px 18px; margin:20px 0; border-left:3px solid var(--line-strong); background:var(--surface-alt); }
+
+.inference-area .resume-reading { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:24px 28px; border:1px solid var(--line); background:var(--surface); border-radius:10px; margin-bottom:44px; }
+.inference-area .resume-reading h2 { font-size:20px; margin:8px 0; }
+.inference-area .resume-reading p { margin:0; color:var(--muted); font-size:13px; }
+.inference-area .resume-reading .btn { flex-shrink:0; }
+.inference-area .course-intro h1 { font-size:38px; margin:10px 0 15px; letter-spacing:-1px; }
+.inference-area .course-intro > p { color:var(--ink-soft); font-size:16px; line-height:1.9; }
+.inference-area .course-intro .course-prerequisites { font-size:13px; color:var(--muted); }
+.inference-area .course-prerequisites a { margin-left:8px; color:var(--accent-deep); text-decoration:underline; text-underline-offset:3px; }
+.inference-area .course-list { list-style:none; margin:24px 0 32px; padding:0; }
+.inference-area .course-list li { display:grid; grid-template-columns:40px minmax(0,1fr) 76px; align-items:center; gap:16px; padding:18px 4px; border-bottom:1px solid var(--line); }
+.inference-area .course-number { font:400 13px var(--mono); color:var(--muted); }
+.inference-area .course-list li > a { display:flex; justify-content:space-between; align-items:center; gap:20px; }
+.inference-area .course-list strong { font-size:16px; font-weight:500; }
+.inference-area .course-list a:hover strong { color:var(--accent-deep); }
+.inference-area .course-list a > span { color:var(--muted); font-size:13px; }
+.inference-area .course-status { display:flex; justify-content:flex-end; align-items:center; gap:4px; color:var(--accent-deep); font-size:12px; }
+.inference-area .browse-catalog { display:flex; flex-wrap:wrap; gap:15px; justify-content:space-between; align-items:center; font-size:14px; }
+.inference-area .browse-catalog span,.inference-area .browse-catalog a { display:flex; align-items:center; gap:10px; }
+.inference-area .browse-catalog a { color:var(--accent-deep); }
+.inference-area .course-note { margin-top:28px; color:var(--muted); font-size:13px; }
+
+.inference-area { min-width:0; }
+.inference-area .inference-overview { max-width:850px; margin:auto; }
+.inference-area .course-intro { margin-bottom:28px; }
+.inference-area .lesson-article .markdown-body { max-width:none; }
+.inference-area .lesson-article .markdown-body li { font-size:inherit; line-height:inherit; }
+.inference-area .lesson-prerequisites button,.inference-area .course-prerequisites button { padding:0; color:var(--accent-deep); text-decoration:underline; text-underline-offset:3px; }
+.inference-area .course-prerequisites button { margin-left:8px; }
+.inference-area .lesson-article h2:focus { outline:none; }
+.inference-area .demo-pipeline > * { min-width:100px; }
+@media(max-width:800px) { .inference-area .resume-reading { flex-direction:column; align-items:flex-start; padding:22px; } .inference-area .course-list li { grid-template-columns:24px minmax(0,1fr) 54px; gap:8px; } .inference-area .course-list li > a { align-items:flex-start; flex-direction:column; gap:6px; } .inference-area .course-intro h1 { font-size:30px; } .inference-area .course-intro > p { font-size:14px; } }

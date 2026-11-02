@@ -1,0 +1,22 @@
+.topics-catalog { max-width:1100px; margin:0 auto; }
+.topics-catalog .topic-module-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; align-items:stretch; }
+.topics-catalog .topic-module-card { display:flex; flex-direction:column; min-width:0; padding:28px; background:var(--surface); border:1px solid var(--line); border-radius:12px; transition:border-color .15s,box-shadow .15s; }
+.topics-catalog .topic-module-card:hover { border-color:var(--accent-deep); box-shadow:var(--shadow); }
+.topics-catalog .topic-module-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.topics-catalog .topic-module-icon { display:grid; place-items:center; width:44px; height:44px; background:var(--surface-alt); color:var(--accent-deep); border-radius:9px; }
+.topics-catalog .topic-module-count { color:var(--muted); font-size:12px; }
+.topics-catalog .topic-module-card h2 { margin:24px 0 12px; font-size:24px; line-height:1.5; font-weight:600; }
+.topics-catalog .topic-module-card p { color:var(--ink-soft); font-size:14px; line-height:1.9; margin:0; }
+.topics-catalog .topic-module-details { list-style:none; padding:0; margin:22px 0 26px; color:var(--muted); font-size:12px; line-height:2; }
+.topics-catalog .topic-module-open { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-top:auto; padding-top:17px; border-top:1px solid var(--line); color:var(--accent-deep); font-size:13px; font-weight:500; }
+.topic-module-area { min-width:0; }
+.topic-module-area .topic-area-breadcrumb { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin:0 0 28px; color:var(--muted); font-size:12px; }
+.topic-module-area .topic-area-breadcrumb a:hover { color:var(--accent-deep); }
+.topic-area-empty { padding:20px 0; }
+.topic-area-empty h1 { margin-bottom:25px; }
+@media(max-width:800px) {
+  .topics-catalog .topic-module-grid { grid-template-columns:1fr; gap:16px; }
+  .topics-catalog .topic-module-card { padding:22px; }
+  .topics-catalog .topic-module-card h2 { font-size:22px; }
+}
+@media(prefers-reduced-motion:reduce) { .topics-catalog .topic-module-card { transition:none; } }

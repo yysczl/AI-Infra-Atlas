@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity, AlertTriangle, ArrowRight, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck,
+  Activity, AlertTriangle, ArrowLeft, ArrowRight, ArrowUpRight, BarChart3, Bookmark, BookmarkCheck,
   BookOpen, Boxes, Braces, Cable, Check, CheckCircle2, ChevronDown, ChevronLeft,
   ChevronRight, Circle, CircleHelp, Clock3, Command, Copy, Cpu, Database,
   Download, Edit3, FileText, FlaskConical, GitBranch, HardDrive,
@@ -17,11 +17,16 @@ import { labs } from './content/labs.js';
 import { labGuides } from './content/lab-guides.js';
 import { builtInNotes } from './content/notes.js';
 import { stageAssessments, QUIZ_PASS_SCORE } from './content/stage-assessments.js';
+import { COURSE_LESSON_BY_ID, COURSE_STORAGE_KEY, EMPTY_COURSE_STATE, courseHref, validateCourseState } from './features/inference-course/data.js';
+import { parseTopicRoute } from './features/topics/routes.js';
 
-const PAGE_IDS = ['dashboard', 'start', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
+const TopicArea = lazy(() => import('./features/topics/TopicArea.jsx'));
+
+const PAGE_IDS = ['dashboard', 'start', 'topics', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
 const PAGE_META = {
   dashboard: { label: '首页', eyebrow: '学习首页' },
   start: { label: '新手起步', eyebrow: '第 0 步' },
+  topics: { label: '专题学习', eyebrow: '专题目录' },
   curriculum: { label: '学习路径', eyebrow: '课程' },
   map: { label: '知识地图', eyebrow: '知识地图' },
   resources: { label: '资源库', eyebrow: '资源库' },
@@ -32,6 +37,7 @@ const PAGE_META = {
 const NAV_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard },
   { id: 'start', icon: Zap },
+  { id: 'topics', icon: Layers3 },
   { id: 'curriculum', icon: BookOpen },
   { id: 'map', icon: Map },
   { id: 'resources', icon: LibraryBig },
@@ -54,6 +60,7 @@ const STORAGE = {
   progress: 'infra-atlas-progress-v1', bookmarks: 'infra-atlas-bookmarks-v1',
   notes: 'infra-atlas-notes-v1', labs: 'infra-atlas-labs-v1', theme: 'infra-atlas-theme-v1',
   assessments: 'infra-atlas-assessments-v1',
+  inferenceCourse: COURSE_STORAGE_KEY,
 };
 
 function usePersistentState(key, fallback) {
@@ -136,13 +143,18 @@ function EmptyState({ icon: Icon = Search, title, description, action }) {
 }
 
 function App() {
-  const initialPage = window.location.hash.replace('#/', '').replace('#', '');
+  const initialHash = window.location.hash;
+  const initialPage = parseTopicRoute(initialHash) ? 'topics' : initialHash.replace('#/', '').replace('#', '').split('?')[0];
   const [activePage, setActivePage] = useState(PAGE_IDS.includes(initialPage) ? initialPage : 'dashboard');
+  const [routeHash, setRouteHash] = useState(initialHash);
   const [mobileNav, setMobileNav] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [topicDetail, setTopicDetail] = useState(null);
   const [selectedModuleId, setSelectedModuleId] = useState('foundations');
-  const [selectedLabId, setSelectedLabId] = useState(labs[0].id);
+  const [selectedLabId, setSelectedLabId] = useState(() => {
+    const id = initialPage === 'labs' && new URLSearchParams(initialHash.split('?')[1]).get('lab');
+    return labs.some(lab => lab.id === id) ? id : labs[0].id;
+  });
   const [selectedNoteId, setSelectedNoteId] = useState(builtInNotes[0]?.id);
   const [resourceFocus, setResourceFocus] = useState({ query: '', category: 'all' });
   const [progress, setProgress] = usePersistentState(STORAGE.progress, {});
@@ -151,7 +163,16 @@ function App() {
   const [labProgress, setLabProgress] = usePersistentState(STORAGE.labs, {});
   const [assessmentRecords, setAssessmentRecords] = usePersistentState(STORAGE.assessments, {});
   const [theme, setTheme] = usePersistentState(STORAGE.theme, 'light');
+  const [savedCourseState, setSavedCourseState] = usePersistentState(STORAGE.inferenceCourse, EMPTY_COURSE_STATE);
+  const inferenceCourseState = validateCourseState(savedCourseState) ? savedCourseState : EMPTY_COURSE_STATE;
+  const setInferenceCourseState = useCallback(update => setSavedCourseState(current => {
+    const state = validateCourseState(current) ? current : EMPTY_COURSE_STATE;
+    return typeof update === 'function' ? update(state) : update;
+  }), [setSavedCourseState]);
   const [toast, setToast] = useState('');
+  const topicRoute = parseTopicRoute(routeHash);
+  const courseReturnId = new URLSearchParams(routeHash.split('?')[1]).get('courseLesson');
+  const returnLesson = COURSE_LESSON_BY_ID[courseReturnId];
 
   const completedTopics = ALL_TOPICS.filter((topic) => progress[topic.id]).length;
   const overallProgress = Math.round((completedTopics / ALL_TOPICS.length) * 100);
@@ -161,8 +182,16 @@ function App() {
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
   useEffect(() => {
     const onHash = () => {
-      const page = window.location.hash.replace('#/', '').replace('#', '');
+      const hash = window.location.hash;
+      setRouteHash(hash);
+      const topic = parseTopicRoute(hash);
+      const page = topic ? 'topics' : hash.replace('#/', '').replace('#', '').split('?')[0];
       if (PAGE_IDS.includes(page)) setActivePage(page);
+      if (topic) { setMobileNav(false); setTopicDetail(null); }
+      if (page === 'labs') {
+        const id = new URLSearchParams(hash.split('?')[1]).get('lab');
+        if (labs.some(lab => lab.id === id)) setSelectedLabId(id);
+      }
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
@@ -186,6 +215,7 @@ function App() {
   function navigate(page) {
     if (!PAGE_IDS.includes(page)) return;
     setActivePage(page);
+    if (page === 'topics') setTopicDetail(null);
     window.location.hash = `/${page}`;
     setMobileNav(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -214,6 +244,7 @@ function App() {
     openModule={openModule} openTopic={openTopic} openResources={openResources} openLab={openLab} openNote={openNote} bookmarks={bookmarks} />;
   else if (activePage === 'start') content = <StartPage navigate={navigate} openModule={openModule}
     openTopic={openTopic} openLab={openLab} openResources={openResources} />;
+  else if (activePage === 'topics') content = <Suspense fallback={<p role="status">正在加载专题…</p>}><TopicArea route={topicRoute} inferenceCourseState={inferenceCourseState} setInferenceCourseState={setInferenceCourseState} openTopic={openTopic} /></Suspense>;
   else if (activePage === 'curriculum') content = <CurriculumPage {...shared} selectedModuleId={selectedModuleId}
     setSelectedModuleId={setSelectedModuleId} setTopicDetail={setTopicDetail} openResources={openResources}
     assessmentRecords={assessmentRecords} setAssessmentRecords={setAssessmentRecords} />;
@@ -228,7 +259,7 @@ function App() {
     setBookmarks={setBookmarks} personalNotes={personalNotes} setPersonalNotes={setPersonalNotes}
     labProgress={labProgress} setLabProgress={setLabProgress} assessmentRecords={assessmentRecords}
     setAssessmentRecords={setAssessmentRecords} theme={theme} setTheme={setTheme}
-    showToast={setToast} completedTopics={completedTopics} />;
+    showToast={setToast} completedTopics={completedTopics} inferenceCourseState={inferenceCourseState} setInferenceCourseState={setInferenceCourseState} />;
 
   return (
     <div className="app-shell">
@@ -273,7 +304,10 @@ function App() {
             <button className="avatar" onClick={() => navigate('notes')} title="进入我的笔记" aria-label="进入我的笔记"><NotebookPen size={17} /></button>
           </div>
         </header>
-        <main className={`page page-${activePage}`}>{content}</main>
+        <main className={`page page-${activePage}`}>
+          {activePage === 'labs' && returnLesson?.labIds.includes(selectedLabId) && <a className="course-return-link btn btn-ghost" href={courseHref(returnLesson.id)}><ArrowLeft size={16} />返回课程：{returnLesson.title}</a>}
+          {content}
+        </main>
         <footer className="site-footer">
           <span>Infra Atlas · AI 基础设施学习指南</span>
           <span>学习记录保存在当前浏览器，可在设置中导出</span>
@@ -281,6 +315,7 @@ function App() {
       </div>
 
       {searchOpen && <SearchPalette onClose={() => setSearchOpen(false)} notes={allNotes}
+        openInferenceLesson={id => { setSearchOpen(false); window.location.hash = courseHref(id).slice(1); }}
         openTopic={(module, topic) => { setSearchOpen(false); openTopic(module.id, topic.id); }}
         openResources={(query) => { setSearchOpen(false); openResources('all', query); }}
         openLab={(id) => { setSearchOpen(false); openLab(id); }}
@@ -958,11 +993,11 @@ function NotesPage({ notes, selectedNoteId, setSelectedNoteId, personalNotes, se
   );
 }
 
-function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, personalNotes, setPersonalNotes, labProgress, setLabProgress, assessmentRecords, setAssessmentRecords, theme, setTheme, showToast, completedTopics }) {
+function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, personalNotes, setPersonalNotes, labProgress, setLabProgress, assessmentRecords, setAssessmentRecords, theme, setTheme, showToast, completedTopics, inferenceCourseState, setInferenceCourseState }) {
   const fileInput = useRef(null);
   const completedLabSteps = Object.values(labProgress).reduce((total, steps) => total + steps.length, 0);
   function exportBackup() {
-    const payload = { product: 'Infra Atlas', version: 1, exportedAt: new Date().toISOString(), data: { progress, bookmarks, personalNotes, labProgress, assessmentRecords, theme } };
+    const payload = { product: 'Infra Atlas', version: 1, exportedAt: new Date().toISOString(), data: { progress, bookmarks, personalNotes, labProgress, assessmentRecords, theme, inferenceCourse: inferenceCourseState } };
     downloadFile(`infra-atlas-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(payload, null, 2), 'application/json');
     showToast('学习数据备份已导出');
   }
@@ -972,8 +1007,10 @@ function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, perso
     try {
       const payload = JSON.parse(await file.text());
       if (payload.product !== 'Infra Atlas' || !payload.data) throw new Error('invalid');
+      if (payload.data.inferenceCourse !== undefined && !validateCourseState(payload.data.inferenceCourse)) throw new Error('invalid inference course');
       if (!window.confirm('导入会替换当前浏览器中的进度、收藏、个人笔记、实验记录和测验成绩。建议先导出备份。继续吗？')) return;
       const data = payload.data;
+      setInferenceCourseState(data.inferenceCourse || EMPTY_COURSE_STATE);
       setProgress(data.progress || {}); setBookmarks(data.bookmarks || []); setPersonalNotes(data.personalNotes || []);
       setLabProgress(data.labProgress || {}); setAssessmentRecords(data.assessmentRecords || {});
       if (['light', 'dark'].includes(data.theme)) setTheme(data.theme);
@@ -992,7 +1029,7 @@ function MaintenancePage({ progress, setProgress, bookmarks, setBookmarks, perso
             <article><span>02</span><div><h3>边做实验边保存结果</h3><p>在“动手实验”中复制命令并逐步核对结果。每个实验和阶段综合项目都可以下载 Markdown 记录模板，用来保存环境、参数、数据和问题。</p></div></article>
             <article><span>03</span><div><h3>把笔记、成绩和进度一起带走</h3><p>笔记、收藏、主题进度、实验勾选和结业测验成绩都保存在当前浏览器。换设备时，先在这里导出备份，再在新设备上恢复。</p></div></article></div>
         </section>
-        <aside className="panel backup-panel"><SectionHead eyebrow="学习数据" title="备份与恢复" /><div className="backup-icon"><HardDrive size={34} /></div><p>备份包含主题进度、资源收藏、实验勾选、结业测验成绩、个人笔记和显示设置。恢复备份会替换当前浏览器里的对应记录。</p>
+        <aside className="panel backup-panel"><SectionHead eyebrow="学习数据" title="备份与恢复" /><div className="backup-icon"><HardDrive size={34} /></div><p>备份包含主题进度、资源收藏、实验勾选、结业测验成绩、个人笔记、专题学习中推理入门课程的进度与阅读位置，以及显示设置。恢复备份会替换当前浏览器里的对应记录。</p>
           <button className="btn btn-primary" onClick={exportBackup}><Download size={17} />导出学习数据</button><button className="btn btn-ghost" onClick={() => fileInput.current?.click()}><Upload size={17} />从备份恢复</button>
           <input ref={fileInput} type="file" accept="application/json,.json" onChange={importBackup} hidden /><small>JSON 文件只在你的设备上处理，不会上传</small>
         </aside>
@@ -1050,15 +1087,25 @@ function TopicDrawer({ module, topic, progress, setProgress, onClose, openResour
   </div>;
 }
 
-function SearchPalette({ onClose, notes, openTopic, openResources, openLab, openNote }) {
+function SearchPalette({ onClose, notes, openTopic, openResources, openLab, openNote, openInferenceLesson }) {
   const [query, setQuery] = useState('');
+  const [courseMatches, setCourseMatches] = useState({ query: '', lessons: [] });
   const inputRef = useRef(null);
   useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    if (!query.trim()) return;
+    import('./features/inference-course/search.js').then(({ searchCourse }) => {
+      if (!cancelled) setCourseMatches({ query, lessons: searchCourse(query) });
+    }).catch(() => { if (!cancelled) setCourseMatches({ query, lessons: [] }); });
+    return () => { cancelled = true; };
+  }, [query]);
   const results = useMemo(() => {
     const term = query.trim().toLowerCase();
     if (!term) return [];
     const score = (text) => text.toLowerCase().includes(term);
     return [
+      ...(courseMatches.query === query ? courseMatches.lessons : []).map(lesson => ({ id: lesson.id, kind: '推理入门', title: lesson.title, subtitle: lesson.summary, action: () => openInferenceLesson(lesson.id) })),
       ...ALL_TOPICS.filter((topic) => {
         const lesson = lessons[topic.id];
         return score(`${topic.title} ${topic.summary} ${topic.question} ${topic.module.title} ${lesson.content} ${lesson.practice} ${lesson.quiz.question}`);
@@ -1067,7 +1114,7 @@ function SearchPalette({ onClose, notes, openTopic, openResources, openLab, open
       ...labs.filter((lab) => score(`${lab.title} ${lab.subtitle} ${lab.goal}`)).map((lab) => ({ id: lab.id, kind: '实验', title: lab.title, subtitle: `${lab.level} · ${lab.subtitle}`, action: () => openLab(lab.id) })),
       ...notes.filter((note) => score(`${note.title} ${note.summary} ${note.body}`)).map((note) => ({ id: note.id, kind: '笔记', title: note.title, subtitle: note.summary, action: () => openNote(note.id) })),
     ].slice(0, 12);
-  }, [query, notes]);
+  }, [query, notes, courseMatches]);
   const suggestions = ['学习率', '分布式训练', 'KV Cache', 'GPU 调度'];
   return <div className="modal-backdrop search-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section className="search-palette">
     <label><Search size={22} /><input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索全站微课、资源、实验与笔记…" /><kbd>ESC</kbd></label>
