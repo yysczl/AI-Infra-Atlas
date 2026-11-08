@@ -5,7 +5,7 @@ import {
   ChevronRight, Circle, CircleHelp, Clock3, Command, Copy, Cpu, Database,
   Download, Edit3, FileText, FlaskConical, GitBranch, HardDrive,
   Layers3, LayoutDashboard, LibraryBig, ListChecks, Map, Menu, Moon, Network, NotebookPen,
-  Plus, RotateCcw, Save, ScanSearch, Search, Server, Settings2, ShieldCheck,
+  Clapperboard, Plus, RotateCcw, Save, ScanSearch, Search, Server, Settings2, ShieldCheck,
   SquareTerminal, Sun, Trash2, Upload, Workflow, X, Zap,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -18,14 +18,17 @@ import { labGuides } from './content/lab-guides.js';
 import { builtInNotes } from './content/notes.js';
 import { stageAssessments, QUIZ_PASS_SCORE } from './content/stage-assessments.js';
 import { COURSE_LESSON_BY_ID, COURSE_STORAGE_KEY, EMPTY_COURSE_STATE, courseHref, validateCourseState } from './features/inference-course/data.js';
+import { parseVideoRoute } from './features/videos/routes.js';
 import { parseTopicRoute } from './features/topics/routes.js';
 
+const VideoArea = lazy(() => import('./features/videos/VideoArea.jsx'));
 const TopicArea = lazy(() => import('./features/topics/TopicArea.jsx'));
 
-const PAGE_IDS = ['dashboard', 'start', 'topics', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
+const PAGE_IDS = ['dashboard', 'start', 'videos', 'topics', 'curriculum', 'map', 'resources', 'labs', 'notes', 'maintenance'];
 const PAGE_META = {
   dashboard: { label: '首页', eyebrow: '学习首页' },
   start: { label: '新手起步', eyebrow: '第 0 步' },
+  videos: { label: '科普视频', eyebrow: '视频配套资料' },
   topics: { label: '专题学习', eyebrow: '专题目录' },
   curriculum: { label: '学习路径', eyebrow: '课程' },
   map: { label: '知识地图', eyebrow: '知识地图' },
@@ -37,6 +40,7 @@ const PAGE_META = {
 const NAV_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard },
   { id: 'start', icon: Zap },
+  { id: 'videos', icon: Clapperboard },
   { id: 'topics', icon: Layers3 },
   { id: 'curriculum', icon: BookOpen },
   { id: 'map', icon: Map },
@@ -144,7 +148,7 @@ function EmptyState({ icon: Icon = Search, title, description, action }) {
 
 function App() {
   const initialHash = window.location.hash;
-  const initialPage = parseTopicRoute(initialHash) ? 'topics' : initialHash.replace('#/', '').replace('#', '').split('?')[0];
+  const initialPage = parseVideoRoute(initialHash) ? 'videos' : parseTopicRoute(initialHash) ? 'topics' : initialHash.replace('#/', '').replace('#', '').split('?')[0];
   const [activePage, setActivePage] = useState(PAGE_IDS.includes(initialPage) ? initialPage : 'dashboard');
   const [routeHash, setRouteHash] = useState(initialHash);
   const [mobileNav, setMobileNav] = useState(false);
@@ -185,9 +189,9 @@ function App() {
       const hash = window.location.hash;
       setRouteHash(hash);
       const topic = parseTopicRoute(hash);
-      const page = topic ? 'topics' : hash.replace('#/', '').replace('#', '').split('?')[0];
+      const page = parseVideoRoute(hash) ? 'videos' : topic ? 'topics' : hash.replace('#/', '').replace('#', '').split('?')[0];
       if (PAGE_IDS.includes(page)) setActivePage(page);
-      if (topic) { setMobileNav(false); setTopicDetail(null); }
+      if (topic || parseVideoRoute(hash)) { setMobileNav(false); setTopicDetail(null); }
       if (page === 'labs') {
         const id = new URLSearchParams(hash.split('?')[1]).get('lab');
         if (labs.some(lab => lab.id === id)) setSelectedLabId(id);
@@ -244,6 +248,7 @@ function App() {
     openModule={openModule} openTopic={openTopic} openResources={openResources} openLab={openLab} openNote={openNote} bookmarks={bookmarks} />;
   else if (activePage === 'start') content = <StartPage navigate={navigate} openModule={openModule}
     openTopic={openTopic} openLab={openLab} openResources={openResources} />;
+  else if (activePage === 'videos') content = <Suspense fallback={<p role="status">正在加载视频资料…</p>}><VideoArea route={parseVideoRoute(routeHash)} /></Suspense>;
   else if (activePage === 'topics') content = <Suspense fallback={<p role="status">正在加载专题…</p>}><TopicArea route={topicRoute} inferenceCourseState={inferenceCourseState} setInferenceCourseState={setInferenceCourseState} openTopic={openTopic} /></Suspense>;
   else if (activePage === 'curriculum') content = <CurriculumPage {...shared} selectedModuleId={selectedModuleId}
     setSelectedModuleId={setSelectedModuleId} setTopicDetail={setTopicDetail} openResources={openResources}

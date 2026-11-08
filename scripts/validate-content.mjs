@@ -1,6 +1,8 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { videos } from '../src/content/videos.js';
+import { videosHref, parseVideoRoute } from '../src/features/videos/routes.js';
 import { learningPaths, modules, stackLayers } from '../src/content/curriculum.js';
 import { lessons } from '../src/content/lessons.js';
 import { labs } from '../src/content/labs.js';
@@ -203,9 +205,45 @@ readdirSync(courseDirectory).filter(name => name.endsWith('.md')).forEach(name =
   if (!courseIds.has(name.replace(/\.md$/, ''))) errors.push(`推理入门正文 ${name} 没有对应课程`);
 });
 
+// Check public material paths before publishing the video catalog.
+duplicates(videos, '科普视频');
+function videoFile(path, video, label, extension, allowQuery = false) {
+  if (allowQuery && typeof path === 'string') path = path.split('?')[0];
+  if (typeof path !== 'string' || !path.startsWith(`/courses/${video.id}/`) || /[?#\\]/.test(path) || path.split('/').some(part => part === '.' || part === '..')) {
+    errors.push(`${label} 必须指向本期 public/courses 目录内的文件`);
+    return;
+  }
+  if (extension && !extension.test(path)) errors.push(`${label} 的文件类型不正确`);
+  try { if (!statSync(join(root, 'public', path.slice(1))).isFile()) throw new Error(); }
+  catch { errors.push(`${label} 文件不存在：${path}`); }
+}
+for (const video of videos) {
+  required(video, ['id', 'title', 'description', 'videoLinks', 'resources'], `科普视频 ${video.id}`);
+  if (!/^[a-z][a-z0-9-]*$/.test(video.id)) errors.push(`科普视频 ID 无效：${video.id}`);
+  if (video.slides) videoFile(video.slides, video, `科普视频 ${video.id} 课件`, /\.html$/i, true);
+  if (video.cover) videoFile(video.cover, video, `科普视频 ${video.id} 封面`, /\.(png|jpe?g|webp|svg|avif)$/i);
+  if (!Array.isArray(video.videoLinks)) errors.push(`科普视频 ${video.id} 的 videoLinks 必须是数组`);
+  else for (const link of video.videoLinks) {
+    required(link, ['label', 'url'], `科普视频 ${video.id} 平台链接`);
+    try { if (!['https:', 'http:'].includes(new URL(link.url).protocol)) throw new Error(); }
+    catch { errors.push(`科普视频 ${video.id} 的平台链接无效`); }
+  }
+  if (!Array.isArray(video.resources)) { errors.push(`科普视频 ${video.id} 的 resources 必须是数组`); continue; }
+  duplicates(video.resources, `科普视频 ${video.id} 资料`);
+  if (!video.slides && !video.resources.length) errors.push(`科普视频 ${video.id} 至少需要课件或补充文档`);
+  for (const resource of video.resources) {
+    required(resource, ['id', 'title', 'path'], `科普视频 ${video.id} 资料`);
+    if (!/^[a-z][a-z0-9-]*$/.test(resource.id)) errors.push(`科普视频 ${video.id} 的资料 ID 无效`);
+    videoFile(resource.path, video, `科普视频 ${video.id} 资料 ${resource.id}`, /\.md$/i);
+    const route = parseVideoRoute(videosHref(video.id, resource.id, '测试段落'));
+    if (route?.videoId !== video.id || route.resourceId !== resource.id || route.section !== '测试段落') errors.push(`科普视频 ${video.id} 资料路由无效`);
+  }
+}
+if (parseVideoRoute('#/dashboard') !== null || parseVideoRoute(videosHref())?.videoId !== null || !parseVideoRoute('#/videos/%zz')?.invalid) errors.push('科普视频路由边界无效');
+
 if (errors.length) {
   console.error(`\n内容校验失败，共 ${errors.length} 项：`);
   errors.forEach((error) => console.error(`  - ${error}`));
   process.exit(1);
 }
-console.log(`内容校验通过：${modules.length} 个领域，${topicIds.size} 个主题，${Object.keys(lessons).length} 节完整微课，${resources.length} 条资源，${labs.length} 个实验，${learningPaths.length} 份综合项目与 ${assessmentQuestionCount} 道结业题；${topicModules.length} 个专题模块，含 ${courseLessons.length} 节推理入门课程。`);
+console.log(`内容校验通过：${modules.length} 个领域，${topicIds.size} 个主题，${Object.keys(lessons).length} 节完整微课，${resources.length} 条资源，${labs.length} 个实验，${learningPaths.length} 份综合项目与 ${assessmentQuestionCount} 道结业题；${topicModules.length} 个专题模块，含 ${courseLessons.length} 节推理入门课程；${videos.length} 期科普视频。`);

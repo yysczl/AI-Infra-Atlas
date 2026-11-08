@@ -1,0 +1,28 @@
+.concept-scene{position:absolute;inset:0;color:#f2efe7;background:radial-gradient(ellipse at 78% 56%,#1b211b65,transparent 54%),#101113;font-family:"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+.concept-scene .concept-mast{position:absolute;left:88px;right:88px;top:53px;display:flex;align-items:center;gap:60px;font-size:18px;letter-spacing:1.8px;color:#878b88}
+.concept-scene .concept-mast>span:first-child{font-size:18px;color:#f2efe7;font-weight:550}
+.concept-scene .concept-mast i{color:#ed8254;margin:0 13px;font-style:normal}
+.concept-scene .concept-folio{position:absolute;right:88px;top:53px;font-family:ui-monospace,monospace;font-size:18px;font-weight:400;color:#f2efe7}
+.concept-scene .concept-folio span{font:17px ui-monospace,monospace;color:#878b88;margin-left:14px}
+.concept-scene .concept-copy{position:absolute;left:88px;top:177px;width:790px;z-index:2}
+.concept-scene .concept-section-index{font:18px ui-monospace,"PingFang SC",monospace;letter-spacing:2px;color:#878b88}
+.concept-scene .concept-section-index span{margin:0 15px;color:#ed8254}
+.concept-scene h1{margin:37px 0 55px;line-height:1.04;letter-spacing:-5px;font-weight:500}
+.concept-scene h1>span{display:block;font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:143px;letter-spacing:-7px}
+.concept-scene h1>strong{display:block;font-size:111px;font-weight:550;letter-spacing:-5px;margin-top:20px}
+.concept-scene .concept-beat-name{display:flex;gap:16px;align-items:center;font-size:25px;font-weight:550;line-height:1.3}
+.concept-scene .concept-beat-name>span{font:19px ui-monospace,monospace;opacity:.65}
+.concept-scene .concept-beat-name em{font:13px ui-monospace,monospace;color:#878b88;letter-spacing:1.4px;margin-left:8px}
+.concept-scene h2{font-size:38px;font-weight:500;letter-spacing:-1px;line-height:1.5;margin:18px 0 15px}
+.concept-scene .concept-copy p{font-size:26px;line-height:1.85;color:#a8ada6;margin:0;letter-spacing:.3px}
+.concept-scene .concept-art{position:absolute;left:910px;top:187px;width:950px;height:751px;overflow:visible}
+.concept-scene .concept-art text{font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+.concept-scene .concept-annotation{position:absolute;right:105px;top:888px;width:790px;display:flex;justify-content:flex-end;gap:18px;align-items:center;color:#a8ada6;font-size:23px;letter-spacing:.5px}
+.concept-scene .concept-annotation-rule{width:60px;height:1px;background:#ed8254}
+.concept-scene .concept-bottom{position:absolute;left:88px;right:88px;top:974px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #343832;padding-top:24px;color:#878b88;font-size:20px}
+.concept-scene .concept-bottom>div{display:flex;gap:40px;margin-right:40px}
+.concept-scene .concept-bottom>div>span{color:#5e645f;font-size:20px}
+.concept-scene .concept-bottom b{font:14px ui-monospace,monospace;margin-right:12px;opacity:.6}
+.concept-scene .concept-bottom>div>.is-on{color:#f2efe7}
+.concept-scene .concept-bottom>div>.is-on:last-child{color:#ed8254}
+.concept-scene .concept-bottom small{font-size:15px;letter-spacing:1px}

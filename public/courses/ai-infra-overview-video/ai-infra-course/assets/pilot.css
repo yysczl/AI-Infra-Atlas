@@ -1,0 +1,82 @@
+/* The stage retains its 16:9 composition; the rehearsal dock uses separate space. */
+body{background:#080909}
+#stage.pilot{background:#101113}
+#stage.pilot::before{display:none}
+#stage.pilot>header,#stage.pilot>#step-caption,#stage.pilot>footer{display:none}
+#stage.pilot #diagram{inset:0;width:1920px;height:1080px}
+#stage.pilot #step-rail{top:auto;bottom:15px;right:88px;z-index:5}
+#stage.pilot #step-rail button{width:30px;height:4px;background:#3d433a}
+#stage.pilot #step-rail button.done{background:#ed8254}
+#stage.pilot #progress{background:#ed8254;height:2px}
+#controls{width:max-content;bottom:10px;padding:9px 12px;gap:6px;background:#191b19;border:1px solid #3a3f36;border-radius:8px;box-shadow:none;max-width:calc(100vw - 20px);font-size:12px;flex-wrap:wrap;justify-content:center}
+#controls button,#controls select{border:0;background:transparent;padding:9px 10px;border-radius:4px;color:#b9bdb4}
+#controls button:hover,#controls select:hover{background:#30362d;color:#f2efe7}
+#controls button.active{background:#3d2c21;color:#f3ad7b}
+#controls button:focus-visible,#controls select:focus-visible{outline:2px solid #ed8254;outline-offset:1px}
+#controls #step{color:#f2efe7;background:#3c4934}
+#controls #page-count{color:#a8b39c;font:12px ui-monospace,monospace}
+#controls i{background:#3d4337;height:19px}
+#controls kbd{font:10px ui-monospace,monospace;color:#87927e;margin-left:5px}
+#controls #pilots{color:#e9a178}
+#controls #chapters{max-width:170px}
+#notes{border-color:#5b6351;background:#161c16f7;color:#efefe6;border-radius:8px}
+#notes-cue,#notes a{color:#c0d5af}
+#toast{background:#343e2d;color:#f2efe7}
+body.recording #controls,body.recording #notes,body.recording #toast,body.recording #step-rail,body.recording #progress,body.recording #step-count{display:none!important}
+body.recording,body.recording *{cursor:none!important}
+@media(max-width:1150px){#controls{gap:2px;font-size:11px}#controls button,#controls select{padding:8px 7px}#controls #chapters{max-width:150px}}
+#outline{width:min(1600px,calc(100vw - 48px));max-height:calc(100vh - 48px);background:#171a16;color:#f2efe7;border:1px solid #4b5144;border-radius:6px;padding:32px;overflow:auto;box-shadow:0 15px 80px #0009}
+#outline::backdrop{background:#080a08d9}
+.outline-head{display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid #383f32;padding-bottom:24px;margin-bottom:26px}
+.outline-head span{font:12px ui-monospace,monospace;letter-spacing:2px;color:#ed8254}.outline-head h2{font-size:27px;font-weight:500;margin:12px 0 0}.outline-head button{background:transparent;border-color:#555f49;color:#c8d2bd}
+#outline-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:24px}#outline-grid h3{font-size:16px;line-height:1.7;font-weight:500;color:#bdc9ae;margin:0 0 20px}#outline-grid h3>span{display:block;color:#ed8254;font:13px ui-monospace,monospace;margin-bottom:10px}
+#outline-grid button{display:block;text-align:left;width:100%;font-size:14px;line-height:1.6;border:0;border-radius:3px;background:transparent;color:#d4d8ce;padding:10px 5px;margin:0 0 4px}#outline-grid button>span{display:block;font:10px ui-monospace,monospace;color:#7e8a72;margin-bottom:3px}#outline-grid button:hover,#outline-grid button:focus-visible{background:#2b3523;color:#f2efe7;outline-color:#ed8254}
+body.recording #outline{display:none!important}
+@media(max-width:1100px){#outline-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+#outline-grid button[aria-current="page"]{background:#303d26;color:#f2efe7}#outline-grid button[aria-current="page"]>span{color:#ed8254}
+
+/* Reserve a separate caption band inside the 16:9 recording. */
+#narration-caption {
+  position: absolute;
+  inset: auto 88px 0;
+  height: 140px;
+  margin: 0;
+  padding: 10px 18px;
+  border-top: 1px solid #373b32;
+  display: grid;
+  place-content: center;
+  font-size: 46px;
+  font-weight: 550;
+  line-height: 1.28;
+  text-align: center;
+  white-space: nowrap;
+  color: #f6f2e9;
+}
+#stage.pilot #diagram {
+  transform-origin: top left;
+  transform: translateX(124.444px) scale(.87037037);
+}
+body.visual-only #stage.pilot #diagram {transform: none}
+body.visual-only #narration-caption,
+body.visual-only #controls,
+body.visual-only #notes,
+body.visual-only #step-rail,
+body.visual-only #progress,
+body.visual-only #toast {display: none !important}
+body.visual-only, body.visual-only * {cursor: none !important}
+#stage.pilot #step-rail {top: 920px; bottom: auto}
+#stage.pilot #step-rail button[aria-current="step"] {background: #f5e3c4}
+#notes {width: min(380px, 34vw)}
+#notes-context {font-size: 15px; line-height: 1.65; color: #b5bdad}
+#notes h3, #notes summary {font-size: 14px; color: #c0d5af}
+#notes details {margin-top: 20px}
+#notes-sources a {display: block}
+.cue-focus {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+  border: 2px solid #f2a777;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px #101113b0;
+}

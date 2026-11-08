@@ -7,6 +7,7 @@ import { once } from 'node:events';
 import { stageAssessments } from '../src/content/stage-assessments.js';
 import { modules } from '../src/content/curriculum.js';
 import { courseLessons } from '../src/features/inference-course/data.js';
+import { videos } from '../src/content/videos.js';
 import { topicModules } from '../src/features/topics/catalog.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -474,6 +475,78 @@ try {
   await page.locator('.inference-overview .course-list li').first().waitFor();
   await page.screenshot({ path: join(artifacts, 'inference-overview-mobile.png'), fullPage: true, animations: 'disabled' });
   console.log('✓ 手机专题总览、模块概览、六节阅读、折叠目录与同站导航');
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await nav('科普视频');
+  await page.locator('.video-card').first().waitFor();
+  await page.screenshot({ path: join(artifacts, 'videos-desktop.png'), fullPage: true, animations: 'disabled' });
+  await page.locator('.video-card').first().click();
+  await page.locator('.video-intro h1').waitFor();
+  const firstVideo = videos[0];
+  assert(await page.locator('.video-actions a').count() === firstVideo.videoLinks.length + (firstVideo.slides ? 1 : 0), '视频与课件按钮数量不符合配置');
+  for (const link of firstVideo.videoLinks) {
+    const button = page.getByRole('link', { name: `去${link.label}观看`, exact: true });
+    assert(await button.getAttribute('href') === link.url, '观看按钮未绑定平台链接');
+    assert(await button.getAttribute('target') === '_blank', '视频链接应在新标签页打开');
+  }
+  const slidesLink = page.getByRole('link', { name: '打开互动课件' });
+  const [slidesPage] = await Promise.all([context.waitForEvent('page'), slidesLink.click()]);
+  await slidesPage.waitForLoadState('load');
+  await slidesPage.locator('#stage #title').filter({ hasText: /.+/ }).waitFor({ state: 'attached' });
+  await slidesPage.locator('#controls').waitFor();
+  await slidesPage.screenshot({ path: join(artifacts, 'video-slides-desktop.png'), fullPage: false, animations: 'disabled' });
+  assert(await slidesPage.locator('#controls').count() === 1, '课件控制栏未加载');
+  await slidesPage.close();
+  const [materialDownload] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: '下载 Markdown' }).click()]);
+  assert(materialDownload.suggestedFilename().endsWith('.md'), '配套资料下载失败');
+  await page.getByRole('link', { name: '在线阅读', exact: true }).click();
+  await page.locator('.video-markdown h1').waitFor();
+  assert((await page.locator('.video-markdown').innerText()).includes('聊天消息'), '补充文章未加载');
+  assert(await page.locator('.video-markdown .katex-display').count() === 4, '四个独立公式未渲染');
+  assert(await page.locator('.video-markdown .katex:not(.katex-display .katex)').count() >= 7, '行内公式未渲染');
+  assert(await page.locator('.video-markdown .katex-error').count() === 0, '公式解析失败');
+  const attentionFormula = page.locator('.video-markdown .katex-display').first();
+  await attentionFormula.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: join(artifacts, 'video-math-desktop.png'), fullPage: false, animations: 'disabled' });
+  await page.locator('.video-toc a').nth(1).click();
+  assert(page.url().includes('section='), '文档目录未生成深链接');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.video-markdown h1').waitFor();
+  await page.waitForFunction(() => {
+    const section = new URLSearchParams(location.hash.split('?')[1]).get('section');
+    const rect = document.getElementById(`video-section-${section}`)?.getBoundingClientRect();
+    return rect && rect.top >= 0 && rect.top < 200;
+  });
+  await page.screenshot({ path: join(artifacts, 'video-reader-desktop.png'), fullPage: false, animations: 'disabled' });
+  for (const width of [390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `视频文档在 ${width}px 横向溢出`);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await attentionFormula.scrollIntoViewIfNeeded();
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), '手机公式造成页面横向溢出');
+  await page.screenshot({ path: join(artifacts, 'video-reader-mobile.png'), fullPage: false, animations: 'disabled' });
+  await page.getByRole('link', { name: '返回本期资料', exact: true }).click();
+  await page.locator('.video-intro').waitFor();
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), '手机视频详情横向溢出');
+  await page.screenshot({ path: join(artifacts, 'video-detail-mobile.png'), fullPage: true, animations: 'disabled' });
+  await page.locator('.mobile-menu').click();
+  await nav('科普视频');
+  await page.locator('.video-card').waitFor();
+  assert(await page.locator('.sidebar.is-open').count() === 0, '手机视频导航未关闭');
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), '手机视频列表横向溢出');
+  await page.goto(`${base}/#/videos/unknown/resources/unknown`);
+  await page.getByRole('heading', { name: '没有找到这份资料' }).waitFor();
+  await page.goto(`${base}/#/videos/%zz`);
+  await page.getByRole('heading', { name: '没有找到这份资料' }).waitFor();
+  const documentPattern = '**/courses/**/resource/*.md';
+  await page.route(documentPattern, route => route.fulfill({ status: 200, contentType: 'text/html', body: '<html>fallback</html>' }));
+  await page.goto(`${base}/#/videos/ai-infra-overview-video/resources/overview`);
+  await page.getByRole('heading', { name: '资料加载失败' }).waitFor();
+  await page.unroute(documentPattern);
+  await page.getByRole('button', { name: '重新加载' }).click();
+  await page.locator('.video-markdown h1').waitFor();
+  console.log('✓ 科普视频导航、独立课件、资料下载、文章目录深链接、手机布局、无效地址与加载重试');
 
   assert(runtimeErrors.length === 0, `浏览器运行错误：${runtimeErrors.join(' | ')}`);
   console.log('✓ 没有捕获到浏览器运行错误');

@@ -1,0 +1,44 @@
+.videos-area { max-width: 1100px; margin: 0 auto; min-width: 0; }
+.video-breadcrumb { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; color: var(--muted); font-size: 12px; }
+.video-breadcrumb a:hover, .video-resource h3 a:hover { color: var(--accent-deep); }
+.video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.video-card { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.video-card:hover { border-color: var(--accent-deep); box-shadow: var(--shadow); }
+.video-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.video-card-art { min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; background: var(--dark-soft); color: var(--accent); }
+.video-card-art span { font-size: 12px; letter-spacing: 2px; }
+.video-card-body { padding: 26px; }
+.video-tags { display: flex; gap: 10px; flex-wrap: wrap; color: var(--accent-deep); font-size: 12px; }
+.video-card h2 { margin: 20px 0 12px; font-size: 24px; }
+.video-card p, .video-resource p { color: var(--ink-soft); font-size: 14px; line-height: 1.9; }
+.video-card-open { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 24px; color: var(--accent-deep); font-size: 13px; }
+.video-intro { padding: 30px; margin-bottom: 36px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.video-intro h1 { font-size: clamp(26px, 4vw, 38px); margin: 16px 0; }
+.video-intro p { max-width: 750px; color: var(--ink-soft); line-height: 1.9; }
+.video-intro .video-audience { color: var(--muted); font-size: 13px; }
+.video-actions, .video-resource-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
+.video-resources { display: grid; gap: 16px; }
+.video-resource { display: flex; align-items: flex-start; gap: 18px; padding: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.video-resource > svg { color: var(--accent-deep); flex-shrink: 0; }
+.video-resource > div { min-width: 0; }
+.video-resource h3 { font-size: 18px; line-height: 1.6; margin: 0; }
+.video-resource-actions { font-size: 13px; color: var(--accent-deep); }
+.video-resource-actions a, .video-reader-toolbar a { display: inline-flex; align-items: center; gap: 7px; }
+.video-reader-toolbar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; font-size: 13px; margin-bottom: 24px; color: var(--accent-deep); }
+.video-reader-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 32px; align-items: start; }
+.video-toc { position: sticky; top: 90px; max-height: calc(100dvh - 110px); overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 12px; }
+.video-toc strong { display: block; padding-bottom: 12px; }
+.video-toc nav { display: grid; gap: 12px; }
+.video-toc a { color: var(--ink-soft); line-height: 1.7; }
+.video-toc a.is-subheading { padding-left: 12px; font-size: 11px; }
+.video-toc a:hover, .video-toc a[aria-current] { color: var(--accent-deep); }
+.video-markdown { min-width: 0; padding: 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow-wrap: anywhere; }
+.video-markdown :is(h1,h2,h3,h4,h5,h6) { scroll-margin-top: 90px; }
+.video-markdown img { max-width: 100%; height: auto; }
+.video-markdown pre { overflow-x: auto; max-width: 100%; }
+.video-markdown table { display: block; overflow-x: auto; }
+@media (max-width: 1000px) { .video-reader-layout { grid-template-columns: 1fr; } .video-toc { position: static; max-height: 240px; } }
+@media (max-width: 700px) { .video-grid { grid-template-columns: 1fr; } .video-intro, .video-card-body, .video-resource { padding: 20px; } .video-markdown { padding: 20px 16px; } .video-markdown h1 { font-size: 25px; } .video-resource { gap: 12px; } }
+
+.video-markdown .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+.video-markdown .katex { font-size: 1.1em; }

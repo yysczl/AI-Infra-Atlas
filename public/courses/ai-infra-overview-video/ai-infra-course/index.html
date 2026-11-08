@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>从零认识 AI Infra · 动画课程</title><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/pilot.css"><link rel="stylesheet" href="assets/scene-concept.css"><link rel="stylesheet" href="assets/scene-memory.css"><link rel="stylesheet" href="assets/scenes-foundation.css"><link rel="stylesheet" href="assets/scenes-inference.css"><link rel="stylesheet" href="assets/scenes-platform.css"></head>
+<body class="recording">
+<main id="stage" aria-label="AI Infra 动画课程">
+<header><div class="eyebrow"><span class="brand">AI INFRA <b>/</b> 入门课</span><span id="chapter-label"></span></div><h1 id="title"></h1><p id="subtitle"></p><span id="slide-id"></span></header>
+<div id="diagram" role="img" aria-label="当前教学图示"></div>
+<section id="step-caption"><div><span class="caption-kicker" id="step-count"></span><h2 id="step-label"></h2></div><p id="step-description"></p></section>
+<div id="step-rail" aria-label="动画步骤"></div>
+<footer><span id="mini-map"></span><span>教学示意</span></footer>
+<div id="progress"></div>
+<p id="narration-caption" aria-live="polite" aria-atomic="true"></p>
+</main>
+<nav id="controls" aria-label="播放控制">
+<button id="pilots" title="切换三张代表页 T">速览 <kbd>T</kbd></button><i></i>
+<button id="prev" title="上一页 ←">←</button><span id="page-count"></span><button id="next" title="下一页 →">→</button><i></i>
+<button id="back" title="上一步 Backspace">上一步</button><button id="step" title="下一步 Space">下一步 ␣</button><button id="pause" title="暂停/继续 P">暂停</button><button id="replay" title="重播当前动作 R">重播</button><i></i>
+<select id="chapters" aria-label="章节跳转"></select><button id="outline-toggle" title="课程目录 G">目录</button><button id="notes-toggle" title="口播提示 N">口播</button><button id="full" title="全屏 F">全屏</button><button id="record" title="录制提词 H">录制 H</button><button id="visual-only" title="纯画面 V">纯画面 V</button>
+</nav>
+<aside id="notes" aria-label="讲师提示" hidden>
+  <div class="notes-head"><strong id="notes-title"></strong><button id="notes-close" aria-label="关闭讲师提示">×</button></div>
+  <p id="notes-text"></p><p id="notes-context"></p>
+  <h3>下一段口播</h3><p id="notes-cue"></p>
+  <small>Space 下一步 · Backspace 上一步 · R 重播当前动作 · P 暂停或继续<br>← → 翻页 · 1–6 章节 · G 目录 · T 速览 · F 全屏<br>H 录制提词或讲师模式 · N 讲师提示 · V 纯画面</small>
+  <details><summary>参考资料</summary><div id="notes-sources"></div></details>
+</aside>
+<div id="toast" role="status"></div>
+<dialog id="outline" aria-labelledby="outline-title"><div class="outline-head"><div><span id="outline-count"></span><h2 id="outline-title">课程目录</h2></div><button id="outline-close" aria-label="关闭目录">关闭 ×</button></div><div id="outline-grid"></div></dialog>
+<script src="assets/course-data.js"></script><script src="assets/diagrams.js"></script><script src="assets/scene-concept.js"></script><script src="assets/scene-memory.js"></script><script src="assets/scenes-foundation.js"></script><script src="assets/scenes-inference.js"></script><script src="assets/scenes-platform.js"></script><script src="assets/scenes-systems.js"></script><script src="assets/player.js"></script>
+</body></html>

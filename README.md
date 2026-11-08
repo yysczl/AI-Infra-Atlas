@@ -84,3 +84,112 @@ src/
 scripts/                  # 新建笔记、内容校验、UI 验收、链接检查
 public/                   # 静态资源
 ```
+
+## 科普视频与配套资料
+
+侧栏“科普视频”按视频选题展示资料。视频在外部平台播放，本站提供互动 HTML 课件、Markdown 在线阅读和原文件下载。没有填写视频链接时，页面隐藏观看按钮。
+
+- `#/videos`：科普视频列表。
+- `#/videos/ai-infra-overview-video`：第一期资料页，可放进视频简介，作为固定资料入口。
+- `#/videos/ai-infra-overview-video/resources/overview`：第一期补充文章。目录链接使用 `?section=段落标识`，刷新和分享后仍能定位。
+- `src/content/videos.js`：每期内容的清单，数组顺序就是栏目展示顺序。
+- `src/features/videos/`：栏目页面、路由、文档阅读器和样式。新增课程通常无需修改这些文件或 `App.jsx`。
+
+### 新增一期课程
+
+**1. 放入公开文件。** 在 `public/courses/` 下新建一个目录，建议使用稳定的英文短名称，例如 `gpu-memory`：
+
+```text
+public/courses/gpu-memory/
+├── slides/
+│   ├── index.html          # HTML 课件入口
+│   └── assets/             # 课件依赖的 JS、CSS、图片等
+├── resource/
+│   ├── overview.md         # 补充文章
+│   ├── glossary.md         # 可选：第二篇资料
+│   └── images/
+│       └── memory.svg      # 可选：文章配图
+└── cover.webp              # 可选：列表封面，建议 16:9
+```
+
+HTML 课件按原目录保留依赖，使用相对路径引用，例如 `assets/style.css`。课件会在新标签页独立打开。第一期使用 `index.html?mode=instructor` 显示翻页与播放控制，避免进入默认隐藏控件的录制模式；`slides` 路径可以附带课件支持的查询参数。不同课程可以使用不同的课件目录名，清单里的路径与实际文件一致即可。
+
+Markdown 使用 UTF-8 编码，无需 frontmatter。建议使用一个 `#` 主标题，以 `##`、`###` 组织正文，阅读器将它们显示在目录中。正文支持表格、列表、代码块、图片和 LaTeX 公式（KaTeX）；同名标题会自动加序号区分。
+
+公式使用 `$…$` 表示行内公式，例如 `$d_k$`；独立公式用单独一行的 `$$` 包围，前后留空行：
+
+```markdown
+$$
+\operatorname{Attention}(Q,K,V)
+=\operatorname{softmax}\left(\frac{QK^\mathsf{T}}{\sqrt{d_k}}+M\right)V
+$$
+```
+
+请将 `\(...\)` 和 `\[...\]` 写法分别改为上述行内与独立公式格式。长公式在手机上可横向滚动，代码块中的公式保持原样显示。
+
+文章内的图片与附件使用相对于 Markdown 文件的路径，例如 `![显存示意图](images/memory.svg)`；同篇文章的标题链接可写成 `#标题标识`。跨文章跳转请使用已登记的站内阅读地址，例如 `/#/videos/gpu-memory/resources/glossary`。相对 `.md` 链接会直接打开原文件，不会自动转成阅读页面。
+
+`public/` 下的文件都会公开并复制到构建目录。制作脚本、缓存、录制源文件和内部草稿应保存在 `public/` 之外。仅放入文件不会自动生成列表，公开展示的课程和文章还需要在清单中登记。
+
+**2. 修改 `src/content/videos.js`。** 在 `videos` 数组里新增一项，例如：
+
+```js
+{
+  id: 'gpu-memory',
+  title: 'GPU 显存都用在哪里？',
+  description: '拆开模型权重、运行中的计算和 KV Cache，理解显存的去向。',
+  audience: '适合已经了解 Token 和模型推理基本流程的读者。',
+  slides: '/courses/gpu-memory/slides/index.html',
+  cover: '/courses/gpu-memory/cover.webp',
+  videoLinks: [],
+  resources: [
+    {
+      id: 'overview',
+      title: 'GPU 显存使用说明',
+      description: '配合课件阅读的概念解释与计算示例。',
+      path: '/courses/gpu-memory/resource/overview.md',
+    },
+    {
+      id: 'glossary',
+      title: '术语速查',
+      path: '/courses/gpu-memory/resource/glossary.md',
+    },
+  ],
+},
+```
+
+以上示例路径需有对应文件；如果没有封面或第二篇文章，删除对应字段或资料项。
+
+| 字段 | 要求 |
+| --- | --- |
+| `id` | 必填，课程间唯一，以小写字母开头，只包含小写字母、数字和连字符；与课程目录名一致 |
+| `title`、`description` | 必填，分别作为展示标题和简介 |
+| `audience` | 可选，适合谁阅读 |
+| `slides` | 可选，HTML 课件路径 |
+| `cover` | 可选，封面路径；省略时使用文字图形卡片 |
+| `videoLinks` | 必填数组，可暂时填 `[]`；每项包含平台名称 `label` 和完整的 HTTP(S) 地址 `url` |
+| `resources` | 必填数组，可为 `[]`；每篇文章包含本期唯一的 `id`、展示标题 `title` 和 `.md` 文件路径 `path`，`description` 可选 |
+
+课件和补充文章至少提供一项。本地文件路径以 `/courses/<课程 id>/` 开头，**不包含 `public`**。课程及文章的 `id` 发布后尽量保持不变，以免旧的视频简介链接失效。文件名可以用中文，页面标题由清单配置决定。
+
+视频发布后，只需将对应的 `videoLinks` 改为真实链接：
+
+```js
+videoLinks: [
+  { label: 'B 站', url: 'https://www.bilibili.com/video/实际视频编号/' },
+],
+```
+
+此处地址为格式示例，登记时请替换为已经发布的视频地址。多个平台可以继续追加，页面将分别显示观看按钮。
+
+**3. 检查并发布。**
+
+```bash
+npm run check
+npm run build
+npm run test:ui
+```
+
+内容校验会检查 ID、必填字段、视频链接格式，以及清单中的 HTML、Markdown 和封面是否存在。课件内部依赖、Markdown 内部图片及附件仍需在本地打开确认。UI 验收检查第一期的栏目入口、阅读、目录、下载和手机端布局。
+
+启动本地网站后，访问 `/#/videos/gpu-memory`，依次打开课件、文档、图片与视频链接。确认后沿用项目原有部署方式发布 `dist/`。以后更新文章或课件，直接修改对应文件并重新构建部署；修改标题、简介、平台链接或增删资料，则编辑 `videos.js`。
